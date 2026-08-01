@@ -7,7 +7,7 @@
   'use strict';
 
   /* Тот же адрес, что используется в брифе. */
-  var GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxFjvkC76Ab_J1M2etqHND61xcvCy7RPfyrFvXGmOLAil7BjFwlf7ZZYhDySv-eEQLV/exec';
+  var GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx3I9NLGT-CkhO-jyO_B2wLGXJpMmEJrljfE43McU13zWDDoUwYwmqSuiwVJXVvOaxGXQ/exec';
 
   var results = document.getElementById('results');
   var endpointInput = document.getElementById('endpoint');

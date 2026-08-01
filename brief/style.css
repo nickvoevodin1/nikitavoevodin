@@ -860,6 +860,8 @@ body {
 .loader__track {
   display: block;
   width: 160px;
+  /* Экран отправки центрирует только текст — блок центрируем сами. */
+  margin: 0 auto;
   height: 2px;
   border-radius: var(--r-round);
   background: var(--line);

@@ -53,6 +53,7 @@
   var nextButton = document.getElementById('nextButton');
   var reviewList = document.getElementById('reviewList');
   var submitError = document.getElementById('submitError');
+  var submitErrorDetail = document.getElementById('submitErrorDetail');
   var fileInput = document.getElementById('fileInput');
   var fileList = document.getElementById('fileList');
   var filesError = document.getElementById('files-error');
@@ -328,6 +329,7 @@
   function showReview() {
     renderReview();
     hide(submitError);
+    hide(submitErrorDetail);
     showScreen(screens.review);
     updateProgress(totalSteps);
   }
@@ -944,6 +946,7 @@
     isSubmitting = true;
     nextButton.classList.add('is-loading');
     hide(submitError);
+    hide(submitErrorDetail);
     showScreen(screens.sending);
 
     Promise.all(selectedFiles.map(readFileAsBase64))
@@ -958,9 +961,10 @@
         clearDraft();
         showScreen(screens.success);
       })
-      .catch(function () {
+      .catch(function (error) {
         showReview();
         showSubmitError(MESSAGES.network);
+        showSubmitErrorDetail(error);
       })
       .then(function () {
         isSubmitting = false;
@@ -971,6 +975,35 @@
   function showSubmitError(message) {
     submitError.textContent = message;
     submitError.hidden = false;
+  }
+
+  /**
+   * Расшифровка сбоя: без неё любая причина выглядит как «нет интернета»,
+   * и понять, что именно чинить в Apps Script, невозможно.
+   */
+  function describeFailure(error) {
+    var reason = error && error.message ? error.message : String(error);
+
+    if (error && error.name === 'AbortError') {
+      return 'Ответ не пришёл за отведённое время. Возможно, файлы слишком тяжёлые.';
+    }
+
+    if (reason.indexOf('Failed to fetch') !== -1 || reason.indexOf('NetworkError') !== -1) {
+      return 'Запрос не дошёл до Google. Чаще всего это значит, что у веб-приложения ' +
+        'в настройках развёртывания доступ выставлен не на «Все».';
+    }
+
+    if (reason.indexOf('JSON') !== -1 || reason.indexOf('Unexpected token') !== -1) {
+      return 'Google ответил не данными, а страницей — обычно это страница входа. ' +
+        'Проверьте, что доступ к веб-приложению открыт всем.';
+    }
+
+    return 'Техническая причина: ' + reason;
+  }
+
+  function showSubmitErrorDetail(error) {
+    submitErrorDetail.textContent = describeFailure(error);
+    submitErrorDetail.hidden = false;
   }
 
   /* Success

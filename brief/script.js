@@ -1,7 +1,7 @@
 /* ==========================================================================
    Бриф проекта — Никита Воеводин
    Блоки: Config · State · Storage · Loader · Screens · Progress · Navigation
-          · Validation · Files · Review · Submit · Success
+          · Validation · Reveals · Files · Review · Submit · Success
    ========================================================================== */
 
 (function () {
@@ -17,20 +17,25 @@
   var GOOGLE_SCRIPT_URL = '';
 
   var STORAGE_KEY = 'nv-brief-draft';
-  var LOADER_DURATION = 3000;
+  var LOADER_DURATION = 800;
   var SAVE_DELAY = 400;
-  var REQUEST_TIMEOUT = 60000;
+  var SAVED_HINT_DURATION = 2000;
+  var LEAVE_DURATION = 160;
+  var REQUEST_TIMEOUT = 120000;
 
-  var ALLOWED_EXTENSIONS = ['png', 'jpg', 'jpeg', 'svg', 'pdf', 'docx', 'zip', 'rar'];
-  var MAX_TOTAL_FILE_SIZE = 10 * 1024 * 1024;
+  var ALLOWED_EXTENSIONS = [
+    'png', 'jpg', 'jpeg', 'svg', 'pdf', 'docx', 'xlsx', 'pptx',
+    'ai', 'psd', 'cdr', 'mp4', 'mov', 'zip', 'rar'
+  ];
+  var IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'svg'];
+  var MAX_TOTAL_FILE_SIZE = 100 * 1024 * 1024;
 
   var MESSAGES = {
     required: 'Пожалуйста, заполните это поле.',
     email: 'Проверьте адрес электронной почты.',
     phone: 'Проверьте номер телефона.',
     url: 'Проверьте ссылку. Например: company.ru',
-    fileType: 'Такой формат не поддерживается: ',
-    fileSize: 'Общий размер файлов не должен превышать 10 МБ.',
+    empty: '— не указано',
     network: 'Не удалось отправить данные. Проверьте подключение к интернету и попробуйте ещё раз.',
     notConfigured: 'Отправка не настроена. Укажите адрес Google Apps Script в файле script.js.'
   };
@@ -42,7 +47,8 @@
   var appMain = document.getElementById('appMain');
   var appFooter = document.getElementById('appFooter');
   var progress = document.getElementById('progress');
-  var progressBar = document.getElementById('progressBar');
+  var counter = document.getElementById('counter');
+  var savedHint = document.getElementById('savedHint');
   var backButton = document.getElementById('backButton');
   var nextButton = document.getElementById('nextButton');
   var reviewList = document.getElementById('reviewList');
@@ -61,15 +67,21 @@
   };
 
   var stepScreens = Array.prototype.slice.call(form.querySelectorAll('[data-screen="step"]'));
-  var totalStages = stepScreens.length + 1;
+  var totalSteps = stepScreens.length;
+  var totalStages = totalSteps + 1;
+  var ticks = [];
 
   var currentScreen = null;
   var currentStepIndex = 0;
   var selectedFiles = [];
   var submissionId = '';
   var saveTimer = null;
+  var savedHintTimer = null;
   var isSubmitting = false;
   var isSubmitted = false;
+
+  var prefersPointer = window.matchMedia('(pointer: fine)').matches;
+  var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* Storage
      ------------------------------------------------------------------------ */
@@ -83,7 +95,7 @@
     }
   }
 
-  function saveDraft() {
+  function saveDraft(withHint) {
     /* После успешной отправки черновик больше не нужен. */
     if (isSubmitted) {
       return;
@@ -95,6 +107,10 @@
         stepIndex: currentStepIndex,
         values: collectValues()
       }));
+
+      if (withHint) {
+        showSavedHint();
+      }
     } catch {
       /* Приватный режим браузера — черновик просто не сохраняется. */
     }
@@ -110,7 +126,17 @@
 
   function scheduleSave() {
     window.clearTimeout(saveTimer);
-    saveTimer = window.setTimeout(saveDraft, SAVE_DELAY);
+    saveTimer = window.setTimeout(function () {
+      saveDraft(true);
+    }, SAVE_DELAY);
+  }
+
+  function showSavedHint() {
+    savedHint.classList.add('is-visible');
+    window.clearTimeout(savedHintTimer);
+    savedHintTimer = window.setTimeout(function () {
+      savedHint.classList.remove('is-visible');
+    }, SAVED_HINT_DURATION);
   }
 
   function collectValues() {
@@ -156,9 +182,11 @@
         control.checked = stored === control.value;
       } else {
         control.value = stored;
-        resizeTextarea(control);
+        markFilled(control);
       }
     });
+
+    updateReveals();
   }
 
   function hasAnswers(values) {
@@ -204,7 +232,7 @@
       loader.classList.add('is-hidden');
       window.setTimeout(function () {
         loader.remove();
-      }, 250);
+      }, LEAVE_DURATION);
     }, LOADER_DURATION);
   }
 
@@ -216,12 +244,32 @@
       return;
     }
 
-    if (currentScreen) {
-      currentScreen.hidden = true;
+    var previous = currentScreen;
+    currentScreen = element;
+
+    if (previous && !prefersReducedMotion) {
+      previous.classList.add('is-leaving');
+      window.setTimeout(function () {
+        previous.classList.remove('is-leaving');
+        previous.hidden = true;
+
+        /* За время анимации мог быть запрошен уже другой экран. */
+        if (currentScreen === element) {
+          revealScreen(element);
+        }
+      }, LEAVE_DURATION);
+      return;
     }
 
+    if (previous) {
+      previous.hidden = true;
+    }
+
+    revealScreen(element);
+  }
+
+  function revealScreen(element) {
     element.hidden = false;
-    currentScreen = element;
 
     /* Перезапуск анимации появления. */
     element.style.animation = 'none';
@@ -235,6 +283,7 @@
 
     appFooter.hidden = !(isStep || isReview);
     progress.hidden = !(isStep || isReview);
+    counter.hidden = !(isStep || isReview);
     backButton.hidden = isStep && currentStepIndex === 0;
     nextButton.textContent = isReview ? 'Отправить' : 'Далее';
 
@@ -243,22 +292,34 @@
 
     appMain.scrollTop = 0;
     window.scrollTo(0, 0);
-    focusFirstControl(element);
+    focusScreen(element);
   }
 
-  function focusFirstControl(element) {
-    var heading = element.querySelector('h1, h2');
+  /**
+   * На десктопе фокус уходит в первое поле — так быстрее заполнять.
+   * На тач-устройствах это открыло бы клавиатуру поверх вопроса,
+   * поэтому фокус получает заголовок: скринридер объявит вопрос.
+   */
+  function focusScreen(element) {
+    var firstControl = prefersPointer
+      ? element.querySelector('input[type="text"], input[type="email"], input[type="tel"], textarea')
+      : null;
 
-    if (!heading) {
+    if (firstControl && !isInsideHiddenBlock(firstControl, element)) {
+      firstControl.focus({ preventScroll: true });
       return;
     }
 
-    heading.setAttribute('tabindex', '-1');
-    heading.focus({ preventScroll: true });
+    var heading = element.querySelector('h1, h2');
+
+    if (heading) {
+      heading.setAttribute('tabindex', '-1');
+      heading.focus({ preventScroll: true });
+    }
   }
 
   function showStep(index) {
-    currentStepIndex = Math.min(Math.max(index, 0), stepScreens.length - 1);
+    currentStepIndex = Math.min(Math.max(index, 0), totalSteps - 1);
     showScreen(stepScreens[currentStepIndex]);
     updateProgress(currentStepIndex);
     saveDraft();
@@ -268,7 +329,7 @@
     renderReview();
     hide(submitError);
     showScreen(screens.review);
-    updateProgress(stepScreens.length);
+    updateProgress(totalSteps);
   }
 
   function hide(element) {
@@ -279,10 +340,32 @@
   /* Progress
      ------------------------------------------------------------------------ */
 
+  function buildScale() {
+    for (var index = 0; index < totalSteps; index += 1) {
+      var tick = document.createElement('span');
+      tick.className = 'tick';
+      progress.appendChild(tick);
+      ticks.push(tick);
+    }
+  }
+
   function updateProgress(stageIndex) {
     var value = Math.round(((stageIndex + 1) / totalStages) * 100);
-    progressBar.style.width = value + '%';
+
     progress.setAttribute('aria-valuenow', String(value));
+    counter.textContent = pad(Math.min(stageIndex + 1, totalSteps)) + ' / ' + pad(totalSteps);
+
+    /* Небольшая задержка — засечки заполняются после смены экрана. */
+    window.setTimeout(function () {
+      ticks.forEach(function (tick, index) {
+        tick.classList.toggle('is-done', index < stageIndex);
+        tick.classList.toggle('is-current', index === stageIndex);
+      });
+    }, prefersReducedMotion ? 0 : 80);
+  }
+
+  function pad(value) {
+    return value < 10 ? '0' + value : String(value);
   }
 
   /* Navigation
@@ -298,7 +381,7 @@
       return;
     }
 
-    if (currentStepIndex === stepScreens.length - 1) {
+    if (currentStepIndex === totalSteps - 1) {
       showReview();
     } else {
       showStep(currentStepIndex + 1);
@@ -307,7 +390,7 @@
 
   function goBack() {
     if (currentScreen && currentScreen.dataset.screen === 'review') {
-      showStep(stepScreens.length - 1);
+      showStep(totalSteps - 1);
       return;
     }
 
@@ -318,7 +401,26 @@
      ------------------------------------------------------------------------ */
 
   var EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-  var URL_PATTERN = /^(https?:\/\/)?([\wЀ-ӿ-]+\.)+[a-zЀ-ӿ]{2,}(\/[^\s]*)?$/i;
+  var URL_PATTERN = /^https?:\/\/([\wЀ-ӿ-]+\.)+[a-zЀ-ӿ]{2,}(\/[^\s]*)?$/i;
+
+  function isUrlField(control) {
+    return control.dataset.validate === 'url';
+  }
+
+  /**
+   * Клиент вводит ровно то, что видит в плейсхолдере — «company.ru».
+   * Схему подставляем сами, иначе корректный ввод отбивался бы ошибкой.
+   */
+  function normalizeUrl(control) {
+    var value = control.value.trim();
+
+    if (value === '' || /^https?:\/\//i.test(value)) {
+      control.value = value;
+      return;
+    }
+
+    control.value = 'https://' + value.replace(/^\/+/, '');
+  }
 
   function getFieldError(control) {
     var value = control.value.trim();
@@ -340,7 +442,7 @@
       return digits.length >= 10 && digits.length <= 15 ? '' : MESSAGES.phone;
     }
 
-    if (control.type === 'url' || control.dataset.validate === 'url') {
+    if (isUrlField(control)) {
       return URL_PATTERN.test(value) ? '' : MESSAGES.url;
     }
 
@@ -373,14 +475,43 @@
     }
   }
 
-  function validateStep(step) {
-    var controls = getControls(step).filter(function (control) {
-      return control.type !== 'checkbox' && control.type !== 'radio';
-    });
+  function markFilled(control) {
+    control.classList.toggle('is-filled', control.value.trim() !== '');
+  }
 
+  /**
+   * Экран целиком скрыт, пока он не активен, поэтому проверять
+   * `closest('[hidden]')` нельзя — ищем скрытый блок только внутри шага.
+   */
+  function isInsideHiddenBlock(control, step) {
+    var node = control.parentElement;
+
+    while (node && node !== step) {
+      if (node.hidden) {
+        return true;
+      }
+      node = node.parentElement;
+    }
+
+    return false;
+  }
+
+  function getValidatableControls(step) {
+    return getControls(step).filter(function (control) {
+      return control.type !== 'checkbox' &&
+        control.type !== 'radio' &&
+        !isInsideHiddenBlock(control, step);
+    });
+  }
+
+  function validateStep(step) {
     var firstInvalid = null;
 
-    controls.forEach(function (control) {
+    getValidatableControls(step).forEach(function (control) {
+      if (isUrlField(control)) {
+        normalizeUrl(control);
+      }
+
       var message = getFieldError(control);
 
       if (message) {
@@ -402,9 +533,9 @@
   }
 
   function findFirstInvalidStepIndex() {
-    for (var index = 0; index < stepScreens.length; index += 1) {
-      var invalid = getControls(stepScreens[index]).some(function (control) {
-        return control.type !== 'checkbox' && control.type !== 'radio' && getFieldError(control) !== '';
+    for (var index = 0; index < totalSteps; index += 1) {
+      var invalid = getValidatableControls(stepScreens[index]).some(function (control) {
+        return getFieldError(control) !== '';
       });
 
       if (invalid) {
@@ -413,6 +544,45 @@
     }
 
     return -1;
+  }
+
+  /* Reveals — условные поля за чекбоксом «Другое» и подобными
+     ------------------------------------------------------------------------ */
+
+  function updateReveals() {
+    var triggers = Array.prototype.slice.call(form.querySelectorAll('[data-reveals]'));
+    var targets = {};
+
+    triggers.forEach(function (trigger) {
+      var id = trigger.dataset.reveals;
+      targets[id] = targets[id] || false;
+      if (trigger.checked) {
+        targets[id] = true;
+      }
+    });
+
+    Object.keys(targets).forEach(function (id) {
+      var target = document.getElementById(id);
+
+      if (!target || target.hidden === !targets[id]) {
+        return;
+      }
+
+      target.hidden = !targets[id];
+
+      /* Скрытое поле не должно попасть в ответы. */
+      if (target.hidden) {
+        getControls(target).forEach(function (control) {
+          if (control.type === 'checkbox' || control.type === 'radio') {
+            control.checked = false;
+          } else {
+            control.value = '';
+            markFilled(control);
+          }
+          clearFieldError(control);
+        });
+      }
+    });
   }
 
   /* Files
@@ -433,38 +603,55 @@
     return (bytes / (1024 * 1024)).toFixed(1).replace('.', ',') + ' МБ';
   }
 
+  function getTotalSize(files) {
+    return files.reduce(function (sum, file) {
+      return sum + file.size;
+    }, 0);
+  }
+
   function addFiles(files) {
-    var rejected = [];
+    var rejectedType = [];
+    var rejectedSize = [];
     var accepted = [];
+    var totalSize = getTotalSize(selectedFiles);
 
     Array.prototype.forEach.call(files, function (file) {
       if (ALLOWED_EXTENSIONS.indexOf(getExtension(file.name)) === -1) {
-        rejected.push(file.name);
+        rejectedType.push(file.name);
         return;
       }
 
-      var duplicate = selectedFiles.some(function (existing) {
+      var duplicate = selectedFiles.concat(accepted).some(function (existing) {
         return existing.name === file.name && existing.size === file.size;
       });
 
-      if (!duplicate) {
-        accepted.push(file);
+      if (duplicate) {
+        return;
       }
+
+      if (totalSize + file.size > MAX_TOTAL_FILE_SIZE) {
+        rejectedSize.push(file.name);
+        return;
+      }
+
+      totalSize += file.size;
+      accepted.push(file);
     });
-
-    var totalSize = selectedFiles.concat(accepted).reduce(function (sum, file) {
-      return sum + file.size;
-    }, 0);
-
-    if (totalSize > MAX_TOTAL_FILE_SIZE) {
-      showFilesError(MESSAGES.fileSize);
-      return;
-    }
 
     selectedFiles = selectedFiles.concat(accepted);
 
-    if (rejected.length) {
-      showFilesError(MESSAGES.fileType + rejected.join(', '));
+    var problems = [];
+
+    if (rejectedType.length) {
+      problems.push('Не подходит формат: ' + rejectedType.join(', ') + '.');
+    }
+
+    if (rejectedSize.length) {
+      problems.push('Не поместилось в лимит 100 МБ: ' + rejectedSize.join(', ') + '.');
+    }
+
+    if (problems.length) {
+      showFilesError(problems.join(' '));
     } else {
       hide(filesError);
     }
@@ -473,7 +660,14 @@
   }
 
   function removeFile(index) {
+    var removed = selectedFiles[index];
+
     selectedFiles.splice(index, 1);
+
+    if (removed && removed.previewUrl) {
+      window.URL.revokeObjectURL(removed.previewUrl);
+    }
+
     hide(filesError);
     renderFiles();
   }
@@ -487,31 +681,57 @@
     fileList.textContent = '';
 
     selectedFiles.forEach(function (file, index) {
-      var item = document.createElement('li');
-      item.className = 'file';
-
-      var name = document.createElement('span');
-      name.className = 'file__name';
-      name.textContent = file.name;
-
-      var size = document.createElement('span');
-      size.className = 'file__size';
-      size.textContent = formatSize(file.size);
-
-      var remove = document.createElement('button');
-      remove.type = 'button';
-      remove.className = 'file__remove';
-      remove.setAttribute('aria-label', 'Удалить файл ' + file.name);
-      remove.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"/></svg>';
-      remove.addEventListener('click', function () {
-        removeFile(index);
-      });
-
-      item.appendChild(name);
-      item.appendChild(size);
-      item.appendChild(remove);
-      fileList.appendChild(item);
+      fileList.appendChild(createFileRow(file, index));
     });
+  }
+
+  function createFileRow(file, index) {
+    var item = document.createElement('li');
+    item.className = 'file';
+
+    var extension = getExtension(file.name);
+
+    if (IMAGE_EXTENSIONS.indexOf(extension) !== -1) {
+      if (!file.previewUrl) {
+        file.previewUrl = window.URL.createObjectURL(file);
+      }
+
+      var preview = document.createElement('img');
+      preview.className = 'file__preview';
+      preview.src = file.previewUrl;
+      preview.alt = '';
+      preview.width = 40;
+      preview.height = 40;
+      item.appendChild(preview);
+    } else {
+      var badge = document.createElement('span');
+      badge.className = 'file__badge';
+      badge.textContent = extension;
+      item.appendChild(badge);
+    }
+
+    var name = document.createElement('span');
+    name.className = 'file__name';
+    name.textContent = file.name;
+
+    var size = document.createElement('span');
+    size.className = 'file__size';
+    size.textContent = formatSize(file.size);
+
+    var remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'file__remove';
+    remove.setAttribute('aria-label', 'Удалить файл ' + file.name);
+    remove.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+    remove.addEventListener('click', function () {
+      removeFile(index);
+    });
+
+    item.appendChild(name);
+    item.appendChild(size);
+    item.appendChild(remove);
+
+    return item;
   }
 
   function readFileAsBase64(file) {
@@ -539,7 +759,7 @@
   /* Review
      ------------------------------------------------------------------------ */
 
-  function getControlLabel(control) {
+  function getControlLabel(control, step) {
     if (control.type === 'checkbox' || control.type === 'radio') {
       var group = control.closest('fieldset');
       var legend = group && group.querySelector('legend');
@@ -552,23 +772,19 @@
       return label.textContent.replace('*', '').trim();
     }
 
-    var described = control.getAttribute('aria-labelledby');
-    var heading = described && document.getElementById(described);
-
-    return heading ? heading.textContent.trim() : control.name;
+    /* Поле, подписанное заголовком экрана: в карточке заголовок уже есть. */
+    return step.dataset.label || 'Ответ';
   }
 
   function collectStepAnswers(step) {
     var answers = [];
     var seenGroups = {};
-    var stepTitle = step.querySelector('h2').textContent.trim();
-
-    function addAnswer(label, value) {
-      /* Если подпись поля повторяет заголовок экрана, показываем только ответ. */
-      answers.push({ label: label === stepTitle ? '' : label, value: value });
-    }
 
     getControls(step).forEach(function (control) {
+      if (isInsideHiddenBlock(control, step)) {
+        return;
+      }
+
       if (control.type === 'checkbox' || control.type === 'radio') {
         if (seenGroups[control.name]) {
           return;
@@ -581,18 +797,21 @@
             return item.value;
           });
 
-        if (checked.length) {
-          addAnswer(getControlLabel(control), checked.join(', '));
-        }
+        answers.push({ label: getControlLabel(control, step), value: checked.join(', ') });
         return;
       }
 
-      var value = control.value.trim();
-
-      if (value) {
-        addAnswer(getControlLabel(control), value);
-      }
+      answers.push({ label: getControlLabel(control, step), value: control.value.trim() });
     });
+
+    if (step.id === 'step-materials') {
+      answers.unshift({
+        label: 'Файлы',
+        value: selectedFiles.map(function (file) {
+          return file.name + ' · ' + formatSize(file.size);
+        }).join('\n')
+      });
+    }
 
     return answers;
   }
@@ -601,27 +820,8 @@
     reviewList.textContent = '';
 
     stepScreens.forEach(function (step, index) {
-      var answers = collectStepAnswers(step);
-
-      if (step.id === 'step-materials') {
-        answers = selectedFiles.map(function (file) {
-          return { label: 'Файл', value: file.name + ' · ' + formatSize(file.size) };
-        });
-      }
-
-      if (!answers.length) {
-        return;
-      }
-
-      reviewList.appendChild(createReviewCard(step, index, answers));
+      reviewList.appendChild(createReviewCard(step, index, collectStepAnswers(step)));
     });
-
-    if (!reviewList.children.length) {
-      var empty = document.createElement('p');
-      empty.className = 'screen__text';
-      empty.textContent = 'Пока ничего не заполнено. Вернитесь назад и ответьте на вопросы.';
-      reviewList.appendChild(empty);
-    }
   }
 
   function createReviewCard(step, index, answers) {
@@ -631,36 +831,46 @@
     var head = document.createElement('p');
     head.className = 'card__head';
 
-    var title = document.createElement('span');
-    title.className = 'card__title';
-    title.textContent = step.querySelector('h2').textContent;
+    var overline = document.createElement('span');
+    overline.className = 'card__overline';
+    overline.textContent = pad(index + 1) + ' · ' + (step.dataset.label || '');
 
     var edit = document.createElement('button');
     edit.type = 'button';
     edit.className = 'card__edit';
     edit.textContent = 'Изменить';
+    edit.setAttribute('aria-label', 'Изменить: ' + (step.dataset.label || ''));
     edit.addEventListener('click', function () {
       showStep(index);
     });
 
-    head.appendChild(title);
+    head.appendChild(overline);
     head.appendChild(edit);
 
     var list = document.createElement('dl');
     list.className = 'card__list';
 
     answers.forEach(function (answer) {
+      var row = document.createElement('div');
+      row.className = 'card__row';
+
       var label = document.createElement('dt');
       label.className = 'card__label';
       label.textContent = answer.label;
-      label.hidden = answer.label === '';
 
       var value = document.createElement('dd');
       value.className = 'card__value';
-      value.textContent = answer.value;
 
-      list.appendChild(label);
-      list.appendChild(value);
+      if (answer.value === '') {
+        value.classList.add('card__value--empty');
+        value.textContent = MESSAGES.empty;
+      } else {
+        value.textContent = answer.value;
+      }
+
+      row.appendChild(label);
+      row.appendChild(value);
+      list.appendChild(row);
     });
 
     card.appendChild(head);
@@ -673,12 +883,10 @@
      ------------------------------------------------------------------------ */
 
   function buildPayload(files) {
-    var values = collectValues();
-
     return {
       submissionId: submissionId,
       submittedAt: new Date().toISOString(),
-      values: values,
+      values: collectValues(),
       files: files
     };
   }
@@ -745,6 +953,8 @@
       .then(function () {
         isSubmitted = true;
         window.clearTimeout(saveTimer);
+        window.clearTimeout(savedHintTimer);
+        savedHint.classList.remove('is-visible');
         clearDraft();
         showScreen(screens.success);
       })
@@ -833,6 +1043,7 @@
 
     form.addEventListener('input', function (event) {
       resizeTextarea(event.target);
+      markFilled(event.target);
 
       if (event.target.classList.contains('is-invalid') && !getFieldError(event.target)) {
         clearFieldError(event.target);
@@ -841,13 +1052,21 @@
       scheduleSave();
     });
 
-    form.addEventListener('change', scheduleSave);
+    form.addEventListener('change', function () {
+      updateReveals();
+      scheduleSave();
+    });
 
     form.addEventListener('blur', function (event) {
       var control = event.target;
 
-      if (!control.name || control.type === 'checkbox' || control.type === 'radio' || control.type === 'file') {
+      if (!control.name || control.type === 'checkbox' || control.type === 'radio') {
         return;
+      }
+
+      if (isUrlField(control)) {
+        normalizeUrl(control);
+        markFilled(control);
       }
 
       var message = getFieldError(control);
@@ -917,6 +1136,7 @@
     });
   }
 
+  buildScale();
   bindEvents();
   runLoader();
 })();

@@ -4,11 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Бриф проекта — Никита Воеводин</title>
-<meta name="description" content="Бриф проекта: несколько вопросов о вашем бизнесе, чтобы подготовить сайт именно под ваши задачи. Заполнение занимает 10–15 минут.">
-<meta name="theme-color" content="#FFFFFF">
+<meta name="description" content="Несколько вопросов о вашем бизнесе, чтобы собрать сайт под ваши задачи. 15 вопросов, 7–10 минут.">
+<meta name="theme-color" content="#FAFAF7">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Бриф проекта — Никита Воеводин">
+<meta property="og:description" content="Несколько вопросов о вашем бизнесе, чтобы собрать сайт под ваши задачи. 15 вопросов, 7–10 минут.">
+<meta property="og:image" content="https://nikitavoevodin.vercel.app/brief/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://nikitavoevodin.vercel.app/brief">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/brief/favicon.svg" type="image/svg+xml">
 <link rel="alternate icon" href="/brief/favicon.ico" sizes="32x32">
 <link rel="preload" href="/brief/fonts/Inter.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/brief/fonts/Onest-600.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/brief/style.css">
 <script src="/brief/script.js" defer></script>
 </head>
@@ -27,11 +36,11 @@
 
 <div class="app" id="app">
 
-  <header class="app__header" id="appHeader">
+  <header class="app__header">
     <p class="logo">Никита Воеводин</p>
-    <span class="progress" id="progress" role="progressbar" aria-label="Прогресс заполнения брифа" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden>
-      <span class="progress__bar" id="progressBar"></span>
-    </span>
+    <span class="saved" id="savedHint" aria-hidden="true">Сохранено</span>
+    <span class="scale" id="progress" role="progressbar" aria-label="Прогресс заполнения брифа" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden></span>
+    <span class="counter" id="counter" hidden></span>
   </header>
 
   <main class="app__main" id="appMain">
@@ -50,48 +59,53 @@
       <!-- Экран 1. Приветствие -->
       <section class="screen screen--center" id="screen-welcome" data-screen="welcome" hidden>
         <h1 class="screen__title screen__title--hero">Бриф проекта</h1>
-        <p class="screen__text">Ответьте на несколько вопросов. Это поможет быстрее понять ваш бизнес и подготовить сайт именно под ваши задачи.</p>
+        <p class="screen__text">Ответьте на несколько вопросов о вашем бизнесе. Это поможет собрать сайт под ваши задачи, а не «как у всех».</p>
         <p class="screen__actions">
           <button type="button" class="button" data-action="start">Начать</button>
         </p>
+        <p class="screen__note">15 вопросов, 7–10 минут. Ответы сохраняются автоматически — можно закрыть вкладку и вернуться позже.</p>
       </section>
 
       <form class="form" id="briefForm" novalidate hidden>
 
-        <!-- Экран 2. О компании -->
-        <section class="screen" id="step-company" data-screen="step" hidden>
+        <!-- Шаг 1. О компании -->
+        <section class="screen" id="step-company" data-screen="step" data-label="О компании" hidden>
           <h2 class="screen__title">Расскажите немного о вашей компании</h2>
           <div class="fields">
             <p class="field">
               <label class="field__label" for="companyName">Название компании <span class="field__required" aria-hidden="true">*</span></label>
               <input class="input" type="text" id="companyName" name="companyName" placeholder="Например, «Северная студия»" autocomplete="organization" required>
-              <span class="field__error" id="companyName-error" hidden></span>
+              <span class="field__error" id="companyName-error" role="alert" hidden></span>
             </p>
             <p class="field">
               <label class="field__label" for="contactPerson">Контактное лицо <span class="field__required" aria-hidden="true">*</span></label>
               <input class="input" type="text" id="contactPerson" name="contactPerson" placeholder="Имя и фамилия" autocomplete="name" required>
-              <span class="field__error" id="contactPerson-error" hidden></span>
+              <span class="field__error" id="contactPerson-error" role="alert" hidden></span>
             </p>
             <p class="field">
               <label class="field__label" for="phone">Телефон <span class="field__required" aria-hidden="true">*</span></label>
               <input class="input" type="tel" id="phone" name="phone" placeholder="+7 900 000-00-00" autocomplete="tel" inputmode="tel" required>
-              <span class="field__error" id="phone-error" hidden></span>
+              <span class="field__error" id="phone-error" role="alert" hidden></span>
             </p>
             <p class="field">
               <label class="field__label" for="email">Email <span class="field__required" aria-hidden="true">*</span></label>
               <input class="input" type="email" id="email" name="email" placeholder="name@company.ru" autocomplete="email" inputmode="email" required>
-              <span class="field__error" id="email-error" hidden></span>
+              <span class="field__error" id="email-error" role="alert" hidden></span>
             </p>
             <p class="field">
-              <label class="field__label" for="website">Сайт</label>
-              <input class="input" type="url" id="website" name="website" placeholder="company.ru" autocomplete="url" inputmode="url" data-validate="url">
-              <span class="field__error" id="website-error" hidden></span>
+              <label class="field__label" for="website">Сайт, если есть</label>
+              <input class="input" type="text" id="website" name="website" placeholder="company.ru" autocomplete="url" inputmode="url" data-validate="url">
+              <span class="field__error" id="website-error" role="alert" hidden></span>
+            </p>
+            <p class="field">
+              <label class="field__label" for="socials">Соцсети</label>
+              <input class="input" type="text" id="socials" name="socials" placeholder="Ссылки через запятую">
             </p>
           </div>
         </section>
 
-        <!-- Экран 3. О бизнесе -->
-        <section class="screen" id="step-business" data-screen="step" hidden>
+        <!-- Шаг 2. О бизнесе -->
+        <section class="screen" id="step-business" data-screen="step" data-label="О бизнесе" hidden>
           <h2 class="screen__title" id="title-business">Чем занимается ваша компания?</h2>
           <div class="fields">
             <p class="field">
@@ -100,8 +114,8 @@
           </div>
         </section>
 
-        <!-- Экран 4. Основные услуги -->
-        <section class="screen" id="step-services" data-screen="step" hidden>
+        <!-- Шаг 3. Услуги -->
+        <section class="screen" id="step-services" data-screen="step" data-label="Услуги" hidden>
           <h2 class="screen__title" id="title-services">Какие услуги являются для вас основными?</h2>
           <div class="fields">
             <p class="field">
@@ -114,8 +128,64 @@
           </div>
         </section>
 
-        <!-- Экран 5. Клиенты -->
-        <section class="screen" id="step-clients" data-screen="step" hidden>
+        <!-- Шаг 4. Результаты сайта -->
+        <section class="screen" id="step-results" data-screen="step" data-label="Результаты сайта" hidden>
+          <h2 class="screen__title">Какие результаты должен приносить сайт?</h2>
+          <p class="screen__text">Отметьте всё, что важно.</p>
+          <div class="fields">
+            <fieldset class="field field--group">
+              <legend class="visually-hidden">Результаты сайта</legend>
+              <span class="choices choices--grid">
+                <label class="choice">
+                  <input class="choice__input" type="checkbox" name="results" value="Получать заявки">
+                  <span class="choice__mark" aria-hidden="true"></span>
+                  <span class="choice__text">Получать заявки</span>
+                </label>
+                <label class="choice">
+                  <input class="choice__input" type="checkbox" name="results" value="Получать звонки">
+                  <span class="choice__mark" aria-hidden="true"></span>
+                  <span class="choice__text">Получать звонки</span>
+                </label>
+                <label class="choice">
+                  <input class="choice__input" type="checkbox" name="results" value="Получать сообщения в Telegram">
+                  <span class="choice__mark" aria-hidden="true"></span>
+                  <span class="choice__text">Получать сообщения в Telegram</span>
+                </label>
+                <label class="choice">
+                  <input class="choice__input" type="checkbox" name="results" value="Получать обращения в WhatsApp">
+                  <span class="choice__mark" aria-hidden="true"></span>
+                  <span class="choice__text">Получать обращения в WhatsApp</span>
+                </label>
+                <label class="choice">
+                  <input class="choice__input" type="checkbox" name="results" value="Повысить доверие">
+                  <span class="choice__mark" aria-hidden="true"></span>
+                  <span class="choice__text">Повысить доверие</span>
+                </label>
+                <label class="choice">
+                  <input class="choice__input" type="checkbox" name="results" value="Презентовать компанию">
+                  <span class="choice__mark" aria-hidden="true"></span>
+                  <span class="choice__text">Презентовать компанию</span>
+                </label>
+                <label class="choice">
+                  <input class="choice__input" type="checkbox" name="results" value="Другое" data-reveals="resultsOtherField">
+                  <span class="choice__mark" aria-hidden="true"></span>
+                  <span class="choice__text">Другое</span>
+                </label>
+              </span>
+            </fieldset>
+            <p class="field" id="resultsOtherField" hidden>
+              <label class="field__label" for="resultsOther">Что именно?</label>
+              <input class="input" type="text" id="resultsOther" name="resultsOther" placeholder="Опишите своими словами">
+            </p>
+            <p class="field">
+              <label class="field__label" for="mainResult">Что из этого главное?</label>
+              <input class="input" type="text" id="mainResult" name="mainResult" placeholder="Один пункт, ради которого всё затевается">
+            </p>
+          </div>
+        </section>
+
+        <!-- Шаг 5. Клиенты -->
+        <section class="screen" id="step-clients" data-screen="step" data-label="Клиенты" hidden>
           <h2 class="screen__title" id="title-clients">Кто ваши клиенты?</h2>
           <div class="fields">
             <p class="field">
@@ -123,164 +193,264 @@
             </p>
             <p class="field">
               <label class="field__label" for="region">Регион работы</label>
-              <input class="input" type="text" id="region" name="region" placeholder="Например, Москва и область">
-            </p>
-            <p class="field">
-              <label class="field__label" for="language">Основной язык</label>
-              <input class="input" type="text" id="language" name="language" placeholder="Русский">
-            </p>
-            <fieldset class="field field--group">
-              <legend class="field__label">Работаете по всей России?</legend>
-              <span class="choices">
-                <label class="choice">
-                  <input class="choice__input" type="radio" name="nationwide" value="Да">
-                  <span class="choice__mark choice__mark--round" aria-hidden="true"></span>
-                  <span class="choice__text">Да</span>
-                </label>
-                <label class="choice">
-                  <input class="choice__input" type="radio" name="nationwide" value="Нет">
-                  <span class="choice__mark choice__mark--round" aria-hidden="true"></span>
-                  <span class="choice__text">Нет</span>
-                </label>
-              </span>
-            </fieldset>
-          </div>
-        </section>
-
-        <!-- Экран 6. Преимущества -->
-        <section class="screen" id="step-advantages" data-screen="step" hidden>
-          <h2 class="screen__title" id="title-advantages">Почему клиенты выбирают именно вас?</h2>
-          <div class="fields">
-            <p class="field">
-              <textarea class="textarea" id="advantages" name="advantages" rows="4" aria-labelledby="title-advantages" placeholder="Опишите ваши сильные стороны. Что делает вас лучше конкурентов?"></textarea>
+              <input class="input" type="text" id="region" name="region" placeholder="Например, Владивосток и Приморский край">
             </p>
           </div>
         </section>
 
-        <!-- Экран 7. Конкуренты -->
-        <section class="screen" id="step-competitors" data-screen="step" hidden>
-          <h2 class="screen__title">Есть ли компании, которые вам нравятся?</h2>
+        <!-- Шаг 6. Отличие от конкурентов -->
+        <section class="screen" id="step-advantages" data-screen="step" data-label="Отличия" hidden>
+          <h2 class="screen__title" id="title-advantages">Почему клиент должен выбрать именно вас, а не конкурентов?</h2>
           <div class="fields">
             <p class="field">
-              <label class="field__label" for="competitor1">Ссылка</label>
-              <input class="input" type="url" id="competitor1" name="competitor1" placeholder="company.ru" inputmode="url" data-validate="url">
-              <span class="field__error" id="competitor1-error" hidden></span>
+              <textarea class="textarea" id="advantages" name="advantages" rows="4" aria-labelledby="title-advantages" placeholder="Что вы делаете иначе. Опыт, гарантии, скорость, цена, сервис — что угодно, но конкретно."></textarea>
+            </p>
+          </div>
+        </section>
+
+        <!-- Шаг 7. Сайты конкурентов -->
+        <section class="screen" id="step-competitors" data-screen="step" data-label="Конкуренты" hidden>
+          <h2 class="screen__title">Сайты ваших конкурентов</h2>
+          <p class="screen__text">Нужны, чтобы не повторить их и сделать сильнее. Достаточно 1–3 ссылок.</p>
+          <div class="fields">
+            <p class="field">
+              <label class="field__label" for="competitor1">Конкурент 1</label>
+              <input class="input" type="text" id="competitor1" name="competitor1" placeholder="company.ru" inputmode="url" data-validate="url">
+              <span class="field__error" id="competitor1-error" role="alert" hidden></span>
             </p>
             <p class="field">
-              <label class="field__label" for="competitor2">Ссылка</label>
-              <input class="input" type="url" id="competitor2" name="competitor2" placeholder="company.ru" inputmode="url" data-validate="url">
-              <span class="field__error" id="competitor2-error" hidden></span>
+              <label class="field__label" for="competitor2">Конкурент 2</label>
+              <input class="input" type="text" id="competitor2" name="competitor2" placeholder="company.ru" inputmode="url" data-validate="url">
+              <span class="field__error" id="competitor2-error" role="alert" hidden></span>
             </p>
             <p class="field">
-              <label class="field__label" for="competitor3">Ссылка</label>
-              <input class="input" type="url" id="competitor3" name="competitor3" placeholder="company.ru" inputmode="url" data-validate="url">
-              <span class="field__error" id="competitor3-error" hidden></span>
+              <label class="field__label" for="competitor3">Конкурент 3</label>
+              <input class="input" type="text" id="competitor3" name="competitor3" placeholder="company.ru" inputmode="url" data-validate="url">
+              <span class="field__error" id="competitor3-error" role="alert" hidden></span>
             </p>
             <p class="field">
-              <label class="field__label" for="competitor4">Ссылка</label>
-              <input class="input" type="url" id="competitor4" name="competitor4" placeholder="company.ru" inputmode="url" data-validate="url">
-              <span class="field__error" id="competitor4-error" hidden></span>
-            </p>
-            <p class="field">
-              <label class="field__label" for="competitor5">Ссылка</label>
-              <input class="input" type="url" id="competitor5" name="competitor5" placeholder="company.ru" inputmode="url" data-validate="url">
-              <span class="field__error" id="competitor5-error" hidden></span>
-            </p>
-            <p class="field">
-              <label class="field__label" for="competitorsLiked">Что именно вам нравится?</label>
+              <label class="field__label" for="competitorsLiked">Что у них сделано сильно?</label>
               <textarea class="textarea" id="competitorsLiked" name="competitorsLiked" rows="3" placeholder="Подход, сервис, оформление — что угодно."></textarea>
             </p>
           </div>
         </section>
 
-        <!-- Экран 8. Примеры сайтов -->
-        <section class="screen" id="step-examples" data-screen="step" hidden>
-          <h2 class="screen__title">Какие сайты вам нравятся?</h2>
+        <!-- Шаг 8. Референсы -->
+        <section class="screen" id="step-examples" data-screen="step" data-label="Референсы" hidden>
+          <h2 class="screen__title">Покажите 2–3 сайта, которые вам нравятся</h2>
+          <p class="screen__text">Не обязательно из вашей сферы — важнее, что именно вас в них зацепило.</p>
           <div class="fields">
             <p class="field">
-              <label class="field__label" for="example1">URL</label>
-              <input class="input" type="url" id="example1" name="example1" placeholder="example.com" inputmode="url" data-validate="url">
-              <span class="field__error" id="example1-error" hidden></span>
+              <label class="field__label" for="example1">Сайт 1</label>
+              <input class="input" type="text" id="example1" name="example1" placeholder="example.com" inputmode="url" data-validate="url">
+              <span class="field__error" id="example1-error" role="alert" hidden></span>
             </p>
             <p class="field">
-              <label class="field__label" for="example2">URL</label>
-              <input class="input" type="url" id="example2" name="example2" placeholder="example.com" inputmode="url" data-validate="url">
-              <span class="field__error" id="example2-error" hidden></span>
+              <label class="field__label" for="example2">Сайт 2</label>
+              <input class="input" type="text" id="example2" name="example2" placeholder="example.com" inputmode="url" data-validate="url">
+              <span class="field__error" id="example2-error" role="alert" hidden></span>
             </p>
             <p class="field">
-              <label class="field__label" for="example3">URL</label>
-              <input class="input" type="url" id="example3" name="example3" placeholder="example.com" inputmode="url" data-validate="url">
-              <span class="field__error" id="example3-error" hidden></span>
+              <label class="field__label" for="example3">Сайт 3</label>
+              <input class="input" type="text" id="example3" name="example3" placeholder="example.com" inputmode="url" data-validate="url">
+              <span class="field__error" id="example3-error" role="alert" hidden></span>
             </p>
             <p class="field">
-              <label class="field__label" for="example4">URL</label>
-              <input class="input" type="url" id="example4" name="example4" placeholder="example.com" inputmode="url" data-validate="url">
-              <span class="field__error" id="example4-error" hidden></span>
-            </p>
-            <p class="field">
-              <label class="field__label" for="example5">URL</label>
-              <input class="input" type="url" id="example5" name="example5" placeholder="example.com" inputmode="url" data-validate="url">
-              <span class="field__error" id="example5-error" hidden></span>
-            </p>
-            <p class="field">
-              <label class="field__label" for="examplesLiked">Что именно понравилось?</label>
-              <textarea class="textarea" id="examplesLiked" name="examplesLiked" rows="3" placeholder="Структура, стиль, подача информации."></textarea>
+              <label class="field__label" for="examplesLiked">Что именно в них привлекло?</label>
+              <textarea class="textarea" id="examplesLiked" name="examplesLiked" rows="3" placeholder="Стиль, структура, анимация, подача текста, ощущение от сайта."></textarea>
             </p>
           </div>
         </section>
 
-        <!-- Экран 9. Новый сайт -->
-        <section class="screen" id="step-goals" data-screen="step" hidden>
-          <h2 class="screen__title">Каким вы видите новый сайт?</h2>
+        <!-- Шаг 9. Обязательные блоки -->
+        <section class="screen" id="step-must-have" data-screen="step" data-label="Обязательные блоки" hidden>
+          <h2 class="screen__title">Что обязательно должно быть на сайте?</h2>
           <div class="fields">
             <fieldset class="field field--group">
-              <legend class="field__label">Что должен делать сайт?</legend>
-              <span class="choices choices--column">
+              <legend class="visually-hidden">Обязательные блоки</legend>
+              <span class="choices choices--grid">
                 <label class="choice">
-                  <input class="choice__input" type="checkbox" name="goals" value="Получать заявки">
+                  <input class="choice__input" type="checkbox" name="mustHave" value="Цены">
                   <span class="choice__mark" aria-hidden="true"></span>
-                  <span class="choice__text">Получать заявки</span>
+                  <span class="choice__text">Цены</span>
                 </label>
                 <label class="choice">
-                  <input class="choice__input" type="checkbox" name="goals" value="Повысить доверие">
+                  <input class="choice__input" type="checkbox" name="mustHave" value="Портфолио">
                   <span class="choice__mark" aria-hidden="true"></span>
-                  <span class="choice__text">Повысить доверие</span>
+                  <span class="choice__text">Портфолио</span>
                 </label>
                 <label class="choice">
-                  <input class="choice__input" type="checkbox" name="goals" value="Показать услуги">
+                  <input class="choice__input" type="checkbox" name="mustHave" value="Кейсы">
                   <span class="choice__mark" aria-hidden="true"></span>
-                  <span class="choice__text">Показать услуги</span>
+                  <span class="choice__text">Кейсы</span>
                 </label>
                 <label class="choice">
-                  <input class="choice__input" type="checkbox" name="goals" value="Рассказать о компании">
+                  <input class="choice__input" type="checkbox" name="mustHave" value="Отзывы">
                   <span class="choice__mark" aria-hidden="true"></span>
-                  <span class="choice__text">Рассказать о компании</span>
+                  <span class="choice__text">Отзывы</span>
                 </label>
                 <label class="choice">
-                  <input class="choice__input" type="checkbox" name="goals" value="Получать звонки">
+                  <input class="choice__input" type="checkbox" name="mustHave" value="Сертификаты и лицензии">
                   <span class="choice__mark" aria-hidden="true"></span>
-                  <span class="choice__text">Получать звонки</span>
+                  <span class="choice__text">Сертификаты и лицензии</span>
                 </label>
                 <label class="choice">
-                  <input class="choice__input" type="checkbox" name="goals" value="Другое">
+                  <input class="choice__input" type="checkbox" name="mustHave" value="Видео">
+                  <span class="choice__mark" aria-hidden="true"></span>
+                  <span class="choice__text">Видео</span>
+                </label>
+                <label class="choice">
+                  <input class="choice__input" type="checkbox" name="mustHave" value="Команда">
+                  <span class="choice__mark" aria-hidden="true"></span>
+                  <span class="choice__text">Команда</span>
+                </label>
+                <label class="choice">
+                  <input class="choice__input" type="checkbox" name="mustHave" value="Карта">
+                  <span class="choice__mark" aria-hidden="true"></span>
+                  <span class="choice__text">Карта</span>
+                </label>
+                <label class="choice">
+                  <input class="choice__input" type="checkbox" name="mustHave" value="FAQ">
+                  <span class="choice__mark" aria-hidden="true"></span>
+                  <span class="choice__text">FAQ</span>
+                </label>
+                <label class="choice">
+                  <input class="choice__input" type="checkbox" name="mustHave" value="Блог">
+                  <span class="choice__mark" aria-hidden="true"></span>
+                  <span class="choice__text">Блог</span>
+                </label>
+                <label class="choice">
+                  <input class="choice__input" type="checkbox" name="mustHave" value="Другое" data-reveals="mustHaveOtherField">
                   <span class="choice__mark" aria-hidden="true"></span>
                   <span class="choice__text">Другое</span>
                 </label>
               </span>
             </fieldset>
-            <p class="field">
-              <label class="field__label" for="goalsExtra">Есть ли дополнительные пожелания?</label>
-              <textarea class="textarea" id="goalsExtra" name="goalsExtra" rows="3" placeholder="Всё, что важно учесть."></textarea>
+            <p class="field" id="mustHaveOtherField" hidden>
+              <label class="field__label" for="mustHaveOther">Что именно?</label>
+              <input class="input" type="text" id="mustHaveOther" name="mustHaveOther" placeholder="Опишите своими словами">
             </p>
           </div>
         </section>
 
-        <!-- Экран 10. Материалы -->
-        <section class="screen" id="step-materials" data-screen="step" hidden>
-          <h2 class="screen__title">Загрузите материалы</h2>
+        <!-- Шаг 10. Стоп-лист -->
+        <section class="screen" id="step-avoid" data-screen="step" data-label="Стоп-лист" hidden>
+          <h2 class="screen__title" id="title-avoid">Что категорически нельзя использовать?</h2>
+          <p class="screen__text">Цвета, стили, приёмы, формулировки, которые вам не нравятся. Чем конкретнее, тем меньше правок потом.</p>
+          <div class="fields">
+            <p class="field">
+              <textarea class="textarea" id="avoid" name="avoid" rows="4" aria-labelledby="title-avoid" placeholder="Например: без чёрного фона, без стоковых фото с улыбками, не как у сетевиков."></textarea>
+            </p>
+          </div>
+        </section>
+
+        <!-- Шаг 11. Фирменный стиль -->
+        <section class="screen" id="step-branding" data-screen="step" data-label="Фирменный стиль" hidden>
+          <h2 class="screen__title">Есть ли фирменный стиль?</h2>
+          <div class="fields">
+            <fieldset class="field field--group">
+              <legend class="visually-hidden">Наличие фирменного стиля</legend>
+              <span class="choices choices--grid">
+                <label class="choice">
+                  <input class="choice__input" type="radio" name="hasBranding" value="Да" data-reveals="brandingDetails">
+                  <span class="choice__mark choice__mark--round" aria-hidden="true"></span>
+                  <span class="choice__text">Да</span>
+                </label>
+                <label class="choice">
+                  <input class="choice__input" type="radio" name="hasBranding" value="Нет">
+                  <span class="choice__mark choice__mark--round" aria-hidden="true"></span>
+                  <span class="choice__text">Нет</span>
+                </label>
+                <label class="choice">
+                  <input class="choice__input" type="radio" name="hasBranding" value="Частично" data-reveals="brandingDetails">
+                  <span class="choice__mark choice__mark--round" aria-hidden="true"></span>
+                  <span class="choice__text">Частично</span>
+                </label>
+              </span>
+            </fieldset>
+            <fieldset class="field field--group" id="brandingDetails" hidden>
+              <legend class="field__label">Что есть в наличии?</legend>
+              <span class="choices choices--grid">
+                <label class="choice">
+                  <input class="choice__input" type="checkbox" name="brandingAssets" value="Логотип">
+                  <span class="choice__mark" aria-hidden="true"></span>
+                  <span class="choice__text">Логотип</span>
+                </label>
+                <label class="choice">
+                  <input class="choice__input" type="checkbox" name="brandingAssets" value="Цвета">
+                  <span class="choice__mark" aria-hidden="true"></span>
+                  <span class="choice__text">Цвета</span>
+                </label>
+                <label class="choice">
+                  <input class="choice__input" type="checkbox" name="brandingAssets" value="Шрифты">
+                  <span class="choice__mark" aria-hidden="true"></span>
+                  <span class="choice__text">Шрифты</span>
+                </label>
+                <label class="choice">
+                  <input class="choice__input" type="checkbox" name="brandingAssets" value="Брендбук">
+                  <span class="choice__mark" aria-hidden="true"></span>
+                  <span class="choice__text">Брендбук</span>
+                </label>
+              </span>
+              <span class="field__hint">Файлы загрузите на экране «Материалы» — он будет дальше.</span>
+            </fieldset>
+          </div>
+        </section>
+
+        <!-- Шаг 12. Контакты на сайте -->
+        <section class="screen" id="step-contacts" data-screen="step" data-label="Контакты на сайте" hidden>
+          <h2 class="screen__title">Какие контакты разместить на сайте?</h2>
+          <p class="screen__text">Заполните только те, что нужны.</p>
+          <div class="fields">
+            <p class="field">
+              <label class="field__label" for="siteContactPhone">Телефон</label>
+              <input class="input" type="tel" id="siteContactPhone" name="siteContactPhone" placeholder="+7 900 000-00-00" inputmode="tel">
+              <span class="field__error" id="siteContactPhone-error" role="alert" hidden></span>
+            </p>
+            <p class="field">
+              <label class="field__label" for="siteContactWhatsapp">WhatsApp</label>
+              <input class="input" type="text" id="siteContactWhatsapp" name="siteContactWhatsapp" placeholder="Номер или ссылка">
+            </p>
+            <p class="field">
+              <label class="field__label" for="siteContactTelegram">Telegram</label>
+              <input class="input" type="text" id="siteContactTelegram" name="siteContactTelegram" placeholder="@username">
+            </p>
+            <p class="field">
+              <label class="field__label" for="siteContactEmail">Email</label>
+              <input class="input" type="email" id="siteContactEmail" name="siteContactEmail" placeholder="info@company.ru" inputmode="email">
+              <span class="field__error" id="siteContactEmail-error" role="alert" hidden></span>
+            </p>
+            <p class="field">
+              <label class="field__label" for="siteContactAddress">Адрес</label>
+              <input class="input" type="text" id="siteContactAddress" name="siteContactAddress" placeholder="Город, улица, офис">
+            </p>
+            <p class="field">
+              <label class="field__label" for="siteContactHours">Время работы</label>
+              <input class="input" type="text" id="siteContactHours" name="siteContactHours" placeholder="Пн–Пт, 9:00–18:00">
+            </p>
+            <p class="field">
+              <label class="field__label" for="siteContactSocials">Соцсети</label>
+              <input class="input" type="text" id="siteContactSocials" name="siteContactSocials" placeholder="Ссылки через запятую">
+            </p>
+          </div>
+        </section>
+
+        <!-- Шаг 13. Материалы -->
+        <section class="screen" id="step-materials" data-screen="step" data-label="Материалы" hidden>
+          <h2 class="screen__title">Загрузите всё, что может пригодиться</h2>
+          <ul class="screen__list">
+            <li>Логотип</li>
+            <li>Фотографии</li>
+            <li>Каталог</li>
+            <li>Коммерческое предложение</li>
+            <li>Презентации</li>
+            <li>Документы</li>
+            <li>Видео</li>
+            <li>Любые другие материалы</li>
+          </ul>
           <div class="fields">
             <div class="upload" id="dropzone">
-              <svg class="upload__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <svg class="upload__icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                 <path d="M17 8l-5-5-5 5"></path>
                 <path d="M12 3v12"></path>
@@ -288,25 +458,70 @@
               <p class="upload__title">Перетащите сюда файлы</p>
               <p class="upload__or">или</p>
               <button type="button" class="button button--secondary" id="pickFiles">Выбрать файлы</button>
-              <input class="visually-hidden" type="file" id="fileInput" name="fileInput" multiple accept=".png,.jpg,.jpeg,.svg,.pdf,.docx,.zip,.rar" aria-label="Выбрать файлы для загрузки">
-              <p class="upload__hint">PNG, JPG, JPEG, SVG, PDF, DOCX, ZIP, RAR — до 10 МБ суммарно</p>
+              <input class="visually-hidden" type="file" id="fileInput" multiple accept=".png,.jpg,.jpeg,.svg,.pdf,.docx,.xlsx,.pptx,.ai,.psd,.cdr,.mp4,.mov,.zip,.rar" aria-label="Выбрать файлы для загрузки">
+              <p class="upload__hint">PNG, JPG, SVG, PDF, DOCX, XLSX, PPTX, AI, PSD, CDR, MP4, MOV, ZIP, RAR — до 100 МБ суммарно</p>
             </div>
-            <span class="field__error" id="files-error" hidden></span>
+            <span class="field__error" id="files-error" role="alert" hidden></span>
             <ul class="file-list" id="fileList"></ul>
-          </div>
-        </section>
-
-        <!-- Экран 11. Дополнительно -->
-        <section class="screen" id="step-extra" data-screen="step" hidden>
-          <h2 class="screen__title" id="title-extra">Есть ли что-то ещё, что нам важно знать?</h2>
-          <div class="fields">
             <p class="field">
-              <textarea class="textarea textarea--large" id="additionalInfo" name="additionalInfo" rows="7" aria-labelledby="title-extra" placeholder="Сроки, пожелания, ограничения, важные детали."></textarea>
+              <label class="field__label" for="materialsLink">Или ссылка на облако</label>
+              <input class="input" type="text" id="materialsLink" name="materialsLink" placeholder="Яндекс Диск, Google Drive, Облако Mail">
             </p>
           </div>
         </section>
 
-        <!-- Экран 12. Проверка -->
+        <!-- Шаг 14. Сроки -->
+        <section class="screen" id="step-deadline" data-screen="step" data-label="Сроки" hidden>
+          <h2 class="screen__title">Когда нужен сайт?</h2>
+          <div class="fields">
+            <fieldset class="field field--group">
+              <legend class="visually-hidden">Срок</legend>
+              <span class="choices choices--grid">
+                <label class="choice">
+                  <input class="choice__input" type="radio" name="deadline" value="Как можно скорее">
+                  <span class="choice__mark choice__mark--round" aria-hidden="true"></span>
+                  <span class="choice__text">Как можно скорее</span>
+                </label>
+                <label class="choice">
+                  <input class="choice__input" type="radio" name="deadline" value="В течение месяца">
+                  <span class="choice__mark choice__mark--round" aria-hidden="true"></span>
+                  <span class="choice__text">В течение месяца</span>
+                </label>
+                <label class="choice">
+                  <input class="choice__input" type="radio" name="deadline" value="1–2 месяца">
+                  <span class="choice__mark choice__mark--round" aria-hidden="true"></span>
+                  <span class="choice__text">1–2 месяца</span>
+                </label>
+                <label class="choice">
+                  <input class="choice__input" type="radio" name="deadline" value="Срок не горит">
+                  <span class="choice__mark choice__mark--round" aria-hidden="true"></span>
+                  <span class="choice__text">Срок не горит</span>
+                </label>
+                <label class="choice">
+                  <input class="choice__input" type="radio" name="deadline" value="К конкретной дате" data-reveals="deadlineDateField">
+                  <span class="choice__mark choice__mark--round" aria-hidden="true"></span>
+                  <span class="choice__text">К конкретной дате</span>
+                </label>
+              </span>
+            </fieldset>
+            <p class="field" id="deadlineDateField" hidden>
+              <label class="field__label" for="deadlineDate">Дата</label>
+              <input class="input" type="date" id="deadlineDate" name="deadlineDate">
+            </p>
+          </div>
+        </section>
+
+        <!-- Шаг 15. Дополнительно -->
+        <section class="screen" id="step-extra" data-screen="step" data-label="Дополнительно" hidden>
+          <h2 class="screen__title" id="title-extra">Есть ли что-то ещё, что нам важно знать?</h2>
+          <div class="fields">
+            <p class="field">
+              <textarea class="textarea textarea--large" id="additionalInfo" name="additionalInfo" rows="6" aria-labelledby="title-extra" placeholder="Сроки, пожелания, ограничения, важные детали."></textarea>
+            </p>
+          </div>
+        </section>
+
+        <!-- Экран проверки -->
         <section class="screen" id="screen-review" data-screen="review" hidden>
           <h2 class="screen__title">Проверьте информацию</h2>
           <div class="review" id="reviewList"></div>
@@ -315,24 +530,26 @@
 
       </form>
 
-      <!-- Экран 13. Отправка -->
+      <!-- Экран отправки -->
       <section class="screen screen--center" id="screen-sending" data-screen="sending" hidden>
         <span class="loader__track"><span class="loader__bar loader__bar--indeterminate"></span></span>
         <p class="screen__text" role="status">Отправляем данные…</p>
       </section>
 
-      <!-- Экран 14. Спасибо -->
+      <!-- Экран благодарности -->
       <section class="screen screen--center" id="screen-success" data-screen="success" hidden>
         <span class="success__mark">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-            <path d="M4 12.5l5.5 5.5L20 6.5"></path>
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <path class="success__path" d="M4 12.5l5.5 5.5L20 6.5"></path>
           </svg>
         </span>
         <h2 class="screen__title">Спасибо!</h2>
-        <p class="screen__text">Мы получили ваш бриф. Уже приступаем к подготовке проекта.</p>
+        <p class="screen__text">Бриф успешно получен. В ближайшее время я внимательно изучу информацию и приступлю к разработке вашего проекта. Если потребуется уточнить детали, я обязательно свяжусь с вами.</p>
+        <p class="screen__text">Спасибо за доверие!</p>
         <p class="screen__actions">
           <button type="button" class="button" data-action="close">Закрыть</button>
         </p>
+        <p class="screen__note">Отвечу в течение 24 часов</p>
         <p class="screen__note" id="closeHint" hidden>Можно закрыть вкладку.</p>
       </section>
 

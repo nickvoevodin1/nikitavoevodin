@@ -21,12 +21,23 @@
       на каком шаге обрывается связь. Служебная, клиентам её показывать не нужно.
     </p>
 
-    <p class="check__url" id="endpoint"></p>
+    <p class="field">
+      <label class="field__label" for="endpoint">Адрес веб-приложения</label>
+      <input class="input check__url" type="text" id="endpoint" spellcheck="false" autocomplete="off">
+    </p>
+    <p class="screen__note">
+      По умолчанию — адрес, прописанный в брифе. Вставьте сюда новый, если делали
+      новое развёртывание, и нажмите «Проверить заново».
+    </p>
+
+    <p class="screen__actions">
+      <button type="button" class="button" id="runCheck">Проверить заново</button>
+    </p>
 
     <ol class="check__list" id="results"></ol>
 
     <p class="screen__actions">
-      <button type="button" class="button" id="runWrite">Пробная запись в таблицу</button>
+      <button type="button" class="button button--secondary" id="runWrite">Пробная запись в таблицу</button>
     </p>
     <p class="screen__note">
       Кнопка отправит в таблицу одну строку с названием «ТЕСТ СВЯЗИ» — её можно удалить.

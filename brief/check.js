@@ -10,8 +10,14 @@
   var GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxFjvkC76Ab_J1M2etqHND61xcvCy7RPfyrFvXGmOLAil7BjFwlf7ZZYhDySv-eEQLV/exec';
 
   var results = document.getElementById('results');
+  var endpointInput = document.getElementById('endpoint');
 
-  document.getElementById('endpoint').textContent = GOOGLE_SCRIPT_URL;
+  endpointInput.value = GOOGLE_SCRIPT_URL;
+
+  /** Проверяем тот адрес, который сейчас в поле: новое развёртывание — новый адрес. */
+  function getUrl() {
+    return endpointInput.value.trim();
+  }
 
   /**
    * Карточка одной пробы. Возвращает функцию завершения.
@@ -55,7 +61,7 @@
       'Проверяем, доходит ли запрос до серверов Google.'
     );
 
-    return window.fetch(GOOGLE_SCRIPT_URL, { method: 'GET', mode: 'no-cors' })
+    return window.fetch(getUrl(), { method: 'GET', mode: 'no-cors' })
       .then(function () {
         finish(true, 'Да, сервер Google отвечает.',
           'Значит, адрес живой и сеть не блокирует запрос. ' +
@@ -82,7 +88,7 @@
       'Запрашиваем ответ функции doGet — так же, как это делает бриф.'
     );
 
-    return window.fetch(GOOGLE_SCRIPT_URL, { method: 'GET' })
+    return window.fetch(getUrl(), { method: 'GET' })
       .then(function (response) {
         return response.text().then(function (text) {
           var isJson = text.indexOf('"status"') !== -1;
@@ -139,7 +145,7 @@
       files: []
     };
 
-    return window.fetch(GOOGLE_SCRIPT_URL, {
+    return window.fetch(getUrl(), {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(payload)
@@ -163,9 +169,21 @@
       });
   }
 
-  probeReachable().then(function (isReachable) {
-    return probeReadable(isReachable);
-  });
+  function runChecks() {
+    results.textContent = '';
+
+    if (!getUrl()) {
+      return Promise.resolve();
+    }
+
+    return probeReachable().then(function (isReachable) {
+      return probeReadable(isReachable);
+    });
+  }
+
+  runChecks();
+
+  document.getElementById('runCheck').addEventListener('click', runChecks);
 
   document.getElementById('runWrite').addEventListener('click', function (event) {
     event.target.disabled = true;

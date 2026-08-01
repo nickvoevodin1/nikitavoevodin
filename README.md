@@ -57,6 +57,7 @@ HTML5, CSS3 и Vanilla JavaScript (ES6+). Без фреймворков, без 
 │   ├── favicon.svg
 │   └── favicon.ico
 │
+├── google-apps-script.gs   — код для Apps Script: приём заявок в таблицу
 ├── vercel.json             — маршрут /brief, заголовки кэширования и безопасности
 └── README.md
 ```
@@ -90,153 +91,11 @@ npx serve .
 ### 2. Добавьте скрипт
 
 В таблице откройте **Расширения → Apps Script**, удалите содержимое файла
-`Код.gs` и вставьте код ниже.
+`Код.gs` и вставьте целиком код из файла [`google-apps-script.gs`](google-apps-script.gs)
+в корне репозитория. Сохраните (Ctrl+S).
 
-```javascript
-/** Бриф проекта — приём заявок в Google Sheets. */
-
-var SHEET_NAME = 'Брифы';
-var DRIVE_FOLDER_NAME = 'Бриф — файлы клиентов';
-
-/** Порядок колонок таблицы: ключ поля формы → заголовок. */
-var FIELDS = [
-  ['companyName', 'Название компании'],
-  ['contactPerson', 'Контактное лицо'],
-  ['phone', 'Телефон'],
-  ['email', 'Email'],
-  ['website', 'Сайт'],
-  ['socials', 'Соцсети'],
-  ['businessDescription', 'Чем занимается компания'],
-  ['services', 'Основные услуги'],
-  ['mainService', 'Самая важная услуга'],
-  ['results', 'Результаты сайта'],
-  ['resultsOther', 'Результаты — другое'],
-  ['mainResult', 'Главный результат'],
-  ['idealClient', 'Идеальный клиент'],
-  ['region', 'Регион работы'],
-  ['advantages', 'Отличие от конкурентов'],
-  ['competitor1', 'Конкурент 1'],
-  ['competitor2', 'Конкурент 2'],
-  ['competitor3', 'Конкурент 3'],
-  ['competitorsLiked', 'Что у конкурентов сделано сильно'],
-  ['example1', 'Референс 1'],
-  ['example2', 'Референс 2'],
-  ['example3', 'Референс 3'],
-  ['examplesLiked', 'Что привлекло в референсах'],
-  ['mustHave', 'Обязательные блоки'],
-  ['mustHaveOther', 'Обязательные блоки — другое'],
-  ['avoid', 'Стоп-лист'],
-  ['hasBranding', 'Фирменный стиль'],
-  ['brandingAssets', 'Что есть в наличии'],
-  ['siteContactPhone', 'Контакт: телефон'],
-  ['siteContactWhatsapp', 'Контакт: WhatsApp'],
-  ['siteContactTelegram', 'Контакт: Telegram'],
-  ['siteContactEmail', 'Контакт: email'],
-  ['siteContactAddress', 'Контакт: адрес'],
-  ['siteContactHours', 'Контакт: время работы'],
-  ['siteContactSocials', 'Контакт: соцсети'],
-  ['materialsLink', 'Ссылка на облако'],
-  ['deadline', 'Срок'],
-  ['deadlineDate', 'Точная дата'],
-  ['additionalInfo', 'Дополнительно']
-];
-
-function doPost(request) {
-  var lock = LockService.getScriptLock();
-  lock.waitLock(30000);
-
-  try {
-    var payload = JSON.parse(request.postData.contents);
-    var sheet = getSheet();
-
-    if (isDuplicate(sheet, payload.submissionId)) {
-      return jsonResponse({ status: 'ok', duplicate: true });
-    }
-
-    var values = payload.values || {};
-    var row = [new Date(payload.submittedAt || Date.now())];
-
-    FIELDS.forEach(function (field) {
-      row.push(formatValue(values[field[0]]));
-    });
-
-    row.push(saveFiles(payload.files, payload.submissionId));
-    row.push(payload.submissionId || '');
-
-    sheet.appendRow(row);
-
-    return jsonResponse({ status: 'ok' });
-  } catch (error) {
-    return jsonResponse({ status: 'error', message: String(error) });
-  } finally {
-    lock.releaseLock();
-  }
-}
-
-function getSheet() {
-  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = spreadsheet.getSheetByName(SHEET_NAME) || spreadsheet.insertSheet(SHEET_NAME);
-
-  if (sheet.getLastRow() === 0) {
-    var headers = ['Дата отправки'];
-
-    FIELDS.forEach(function (field) {
-      headers.push(field[1]);
-    });
-
-    headers.push('Файлы', 'ID заявки');
-    sheet.appendRow(headers);
-    sheet.setFrozenRows(1);
-  }
-
-  return sheet;
-}
-
-function isDuplicate(sheet, submissionId) {
-  if (!submissionId || sheet.getLastRow() < 2) {
-    return false;
-  }
-
-  var column = sheet.getLastColumn();
-  var ids = sheet.getRange(2, column, sheet.getLastRow() - 1, 1).getValues();
-
-  return ids.some(function (cell) {
-    return String(cell[0]) === String(submissionId);
-  });
-}
-
-function formatValue(value) {
-  if (value === undefined || value === null) {
-    return '';
-  }
-
-  return Array.isArray(value) ? value.join(', ') : String(value);
-}
-
-function saveFiles(files, submissionId) {
-  if (!files || !files.length) {
-    return '';
-  }
-
-  var folder = getFolder(DRIVE_FOLDER_NAME).createFolder(submissionId || String(Date.now()));
-
-  return files.map(function (file) {
-    var blob = Utilities.newBlob(Utilities.base64Decode(file.content), file.type, file.name);
-    return folder.createFile(blob).getUrl();
-  }).join('\n');
-}
-
-function getFolder(name) {
-  var folders = DriveApp.getFoldersByName(name);
-  return folders.hasNext() ? folders.next() : DriveApp.createFolder(name);
-}
-
-function jsonResponse(data) {
-  return ContentService
-    .createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-```
+Скрипт сам создаёт лист «Брифы», строку заголовков и папку на Google Диске для
+вложений — заранее ничего готовить не нужно.
 
 ### 3. Опубликуйте веб-приложение
 
@@ -246,6 +105,11 @@ function jsonResponse(data) {
 4. **У кого есть доступ:** «Все».
 5. Нажмите **Развернуть** и разрешите доступ к Google Drive и Google Sheets.
 6. Скопируйте выданный адрес — он заканчивается на `/exec`.
+
+Быстрая проверка: откройте этот адрес в браузере. Должно появиться
+`{"status":"ok","message":"Бриф проекта: приём заявок работает."}`.
+Если вместо этого открылась страница входа Google — в пункте 4 доступ выставлен
+не на «Все», и форма будет получать ошибку.
 
 ### 4. Укажите адрес в проекте
 

@@ -1,7 +1,7 @@
 /* ==========================================================================
    Бриф проекта — Никита Воеводин
    Блоки: Config · State · Storage · Loader · Screens · Progress · Navigation
-          · Validation · Reveals · Files · Review · Submit · Success
+          · Validation · Reveals · Review · Submit · Success
    ========================================================================== */
 
 (function () {
@@ -21,14 +21,7 @@
   var SAVE_DELAY = 400;
   var SAVED_HINT_DURATION = 2000;
   var LEAVE_DURATION = 160;
-  var REQUEST_TIMEOUT = 120000;
-
-  var ALLOWED_EXTENSIONS = [
-    'png', 'jpg', 'jpeg', 'svg', 'pdf', 'docx', 'xlsx', 'pptx',
-    'ai', 'psd', 'cdr', 'mp4', 'mov', 'zip', 'rar'
-  ];
-  var IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'svg'];
-  var MAX_TOTAL_FILE_SIZE = 100 * 1024 * 1024;
+  var REQUEST_TIMEOUT = 30000;
 
   var MESSAGES = {
     required: 'Пожалуйста, заполните это поле.',
@@ -54,10 +47,6 @@
   var reviewList = document.getElementById('reviewList');
   var submitError = document.getElementById('submitError');
   var submitErrorDetail = document.getElementById('submitErrorDetail');
-  var fileInput = document.getElementById('fileInput');
-  var fileList = document.getElementById('fileList');
-  var filesError = document.getElementById('files-error');
-  var dropzone = document.getElementById('dropzone');
 
   var screens = {
     draft: document.getElementById('screen-draft'),
@@ -74,7 +63,6 @@
 
   var currentScreen = null;
   var currentStepIndex = 0;
-  var selectedFiles = [];
   var submissionId = '';
   var saveTimer = null;
   var savedHintTimer = null;
@@ -587,177 +575,6 @@
     });
   }
 
-  /* Files
-     ------------------------------------------------------------------------ */
-
-  function getExtension(name) {
-    var parts = name.split('.');
-    return parts.length > 1 ? parts.pop().toLowerCase() : '';
-  }
-
-  function formatSize(bytes) {
-    if (bytes < 1024) {
-      return bytes + ' Б';
-    }
-    if (bytes < 1024 * 1024) {
-      return Math.round(bytes / 1024) + ' КБ';
-    }
-    return (bytes / (1024 * 1024)).toFixed(1).replace('.', ',') + ' МБ';
-  }
-
-  function getTotalSize(files) {
-    return files.reduce(function (sum, file) {
-      return sum + file.size;
-    }, 0);
-  }
-
-  function addFiles(files) {
-    var rejectedType = [];
-    var rejectedSize = [];
-    var accepted = [];
-    var totalSize = getTotalSize(selectedFiles);
-
-    Array.prototype.forEach.call(files, function (file) {
-      if (ALLOWED_EXTENSIONS.indexOf(getExtension(file.name)) === -1) {
-        rejectedType.push(file.name);
-        return;
-      }
-
-      var duplicate = selectedFiles.concat(accepted).some(function (existing) {
-        return existing.name === file.name && existing.size === file.size;
-      });
-
-      if (duplicate) {
-        return;
-      }
-
-      if (totalSize + file.size > MAX_TOTAL_FILE_SIZE) {
-        rejectedSize.push(file.name);
-        return;
-      }
-
-      totalSize += file.size;
-      accepted.push(file);
-    });
-
-    selectedFiles = selectedFiles.concat(accepted);
-
-    var problems = [];
-
-    if (rejectedType.length) {
-      problems.push('Не подходит формат: ' + rejectedType.join(', ') + '.');
-    }
-
-    if (rejectedSize.length) {
-      problems.push('Не поместилось в лимит 100 МБ: ' + rejectedSize.join(', ') + '.');
-    }
-
-    if (problems.length) {
-      showFilesError(problems.join(' '));
-    } else {
-      hide(filesError);
-    }
-
-    renderFiles();
-  }
-
-  function removeFile(index) {
-    var removed = selectedFiles[index];
-
-    selectedFiles.splice(index, 1);
-
-    if (removed && removed.previewUrl) {
-      window.URL.revokeObjectURL(removed.previewUrl);
-    }
-
-    hide(filesError);
-    renderFiles();
-  }
-
-  function showFilesError(message) {
-    filesError.textContent = message;
-    filesError.hidden = false;
-  }
-
-  function renderFiles() {
-    fileList.textContent = '';
-
-    selectedFiles.forEach(function (file, index) {
-      fileList.appendChild(createFileRow(file, index));
-    });
-  }
-
-  function createFileRow(file, index) {
-    var item = document.createElement('li');
-    item.className = 'file';
-
-    var extension = getExtension(file.name);
-
-    if (IMAGE_EXTENSIONS.indexOf(extension) !== -1) {
-      if (!file.previewUrl) {
-        file.previewUrl = window.URL.createObjectURL(file);
-      }
-
-      var preview = document.createElement('img');
-      preview.className = 'file__preview';
-      preview.src = file.previewUrl;
-      preview.alt = '';
-      preview.width = 40;
-      preview.height = 40;
-      item.appendChild(preview);
-    } else {
-      var badge = document.createElement('span');
-      badge.className = 'file__badge';
-      badge.textContent = extension;
-      item.appendChild(badge);
-    }
-
-    var name = document.createElement('span');
-    name.className = 'file__name';
-    name.textContent = file.name;
-
-    var size = document.createElement('span');
-    size.className = 'file__size';
-    size.textContent = formatSize(file.size);
-
-    var remove = document.createElement('button');
-    remove.type = 'button';
-    remove.className = 'file__remove';
-    remove.setAttribute('aria-label', 'Удалить файл ' + file.name);
-    remove.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"/></svg>';
-    remove.addEventListener('click', function () {
-      removeFile(index);
-    });
-
-    item.appendChild(name);
-    item.appendChild(size);
-    item.appendChild(remove);
-
-    return item;
-  }
-
-  function readFileAsBase64(file) {
-    return new Promise(function (resolve, reject) {
-      var reader = new FileReader();
-
-      reader.onload = function () {
-        var result = String(reader.result);
-        resolve({
-          name: file.name,
-          size: file.size,
-          type: file.type || 'application/octet-stream',
-          content: result.slice(result.indexOf(',') + 1)
-        });
-      };
-
-      reader.onerror = function () {
-        reject(new Error('Не удалось прочитать файл ' + file.name));
-      };
-
-      reader.readAsDataURL(file);
-    });
-  }
-
   /* Review
      ------------------------------------------------------------------------ */
 
@@ -805,15 +622,6 @@
 
       answers.push({ label: getControlLabel(control, step), value: control.value.trim() });
     });
-
-    if (step.id === 'step-materials') {
-      answers.unshift({
-        label: 'Файлы',
-        value: selectedFiles.map(function (file) {
-          return file.name + ' · ' + formatSize(file.size);
-        }).join('\n')
-      });
-    }
 
     return answers;
   }
@@ -884,12 +692,11 @@
   /* Submit
      ------------------------------------------------------------------------ */
 
-  function buildPayload(files) {
+  function buildPayload() {
     return {
       submissionId: submissionId,
       submittedAt: new Date().toISOString(),
-      values: collectValues(),
-      files: files
+      values: collectValues()
     };
   }
 
@@ -949,10 +756,7 @@
     hide(submitErrorDetail);
     showScreen(screens.sending);
 
-    Promise.all(selectedFiles.map(readFileAsBase64))
-      .then(function (files) {
-        return sendPayload(buildPayload(files));
-      })
+    sendPayload(buildPayload())
       .then(function () {
         isSubmitted = true;
         window.clearTimeout(saveTimer);
@@ -1118,40 +922,6 @@
     screens.success.addEventListener('click', function (event) {
       if (event.target.dataset.action === 'close') {
         closePage();
-      }
-    });
-
-    document.getElementById('pickFiles').addEventListener('click', function (event) {
-      event.stopPropagation();
-      fileInput.click();
-    });
-
-    fileInput.addEventListener('change', function () {
-      addFiles(fileInput.files);
-      fileInput.value = '';
-    });
-
-    dropzone.addEventListener('click', function () {
-      fileInput.click();
-    });
-
-    ['dragenter', 'dragover'].forEach(function (eventName) {
-      dropzone.addEventListener(eventName, function (event) {
-        event.preventDefault();
-        dropzone.classList.add('is-active');
-      });
-    });
-
-    ['dragleave', 'drop'].forEach(function (eventName) {
-      dropzone.addEventListener(eventName, function (event) {
-        event.preventDefault();
-        dropzone.classList.remove('is-active');
-      });
-    });
-
-    dropzone.addEventListener('drop', function (event) {
-      if (event.dataTransfer && event.dataTransfer.files.length) {
-        addFiles(event.dataTransfer.files);
       }
     });
 

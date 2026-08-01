@@ -437,7 +437,8 @@
 
         <!-- Шаг 13. Материалы -->
         <section class="screen" id="step-materials" data-screen="step" data-label="Материалы" hidden>
-          <h2 class="screen__title">Загрузите всё, что может пригодиться</h2>
+          <h2 class="screen__title">Пришлите ссылку на материалы</h2>
+          <p class="screen__text">Google Диск, Яндекс Диск, Облако Mail — любое хранилище. Проверьте, что доступ по ссылке открыт.</p>
           <ul class="screen__list">
             <li>Логотип</li>
             <li>Фотографии</li>
@@ -449,23 +450,9 @@
             <li>Любые другие материалы</li>
           </ul>
           <div class="fields">
-            <div class="upload" id="dropzone">
-              <svg class="upload__icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <path d="M17 8l-5-5-5 5"></path>
-                <path d="M12 3v12"></path>
-              </svg>
-              <p class="upload__title">Перетащите сюда файлы</p>
-              <p class="upload__or">или</p>
-              <button type="button" class="button button--secondary" id="pickFiles">Выбрать файлы</button>
-              <input class="visually-hidden" type="file" id="fileInput" multiple accept=".png,.jpg,.jpeg,.svg,.pdf,.docx,.xlsx,.pptx,.ai,.psd,.cdr,.mp4,.mov,.zip,.rar" aria-label="Выбрать файлы для загрузки">
-              <p class="upload__hint">PNG, JPG, SVG, PDF, DOCX, XLSX, PPTX, AI, PSD, CDR, MP4, MOV, ZIP, RAR — до 100 МБ суммарно</p>
-            </div>
-            <span class="field__error" id="files-error" role="alert" hidden></span>
-            <ul class="file-list" id="fileList"></ul>
             <p class="field">
-              <label class="field__label" for="materialsLink">Или ссылка на облако</label>
-              <input class="input" type="text" id="materialsLink" name="materialsLink" placeholder="Яндекс Диск, Google Drive, Облако Mail">
+              <label class="field__label" for="materialsLink">Ссылки на материалы</label>
+              <textarea class="textarea" id="materialsLink" name="materialsLink" rows="3" placeholder="По одной ссылке в строке"></textarea>
             </p>
           </div>
         </section>

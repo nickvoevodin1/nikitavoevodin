@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Бриф проекта — Никита Воеводин</title>
+<meta name="description" content="Бриф проекта: несколько вопросов о вашем бизнесе, чтобы подготовить сайт именно под ваши задачи. Заполнение занимает 10–15 минут.">
+<meta name="theme-color" content="#FFFFFF">
+<link rel="icon" href="/brief/favicon.svg" type="image/svg+xml">
+<link rel="alternate icon" href="/brief/favicon.ico" sizes="32x32">
+<link rel="preload" href="/brief/fonts/Inter.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/brief/style.css">
+<script src="/brief/script.js" defer></script>
+</head>
+<body>
+
+<!-- Экран 0. Загрузка -->
+<section class="loader" id="loader" aria-label="Подготовка брифа">
+  <p class="loader__logo">Никита Воеводин</p>
+  <span class="loader__track"><span class="loader__bar" id="loaderBar"></span></span>
+  <p class="loader__text">Подготавливаем бриф проекта…</p>
+</section>
+
+<noscript>
+  <p class="noscript">Для заполнения брифа включите JavaScript в настройках браузера.</p>
+</noscript>
+
+<div class="app" id="app">
+
+  <header class="app__header" id="appHeader">
+    <p class="logo">Никита Воеводин</p>
+    <span class="progress" id="progress" role="progressbar" aria-label="Прогресс заполнения брифа" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden>
+      <span class="progress__bar" id="progressBar"></span>
+    </span>
+  </header>
+
+  <main class="app__main" id="appMain">
+    <div class="container">
+
+      <!-- Экран восстановления черновика -->
+      <section class="screen" id="screen-draft" data-screen="draft" hidden>
+        <h1 class="screen__title">Мы нашли незавершённый бриф</h1>
+        <p class="screen__text">Вы не закончили заполнение анкеты. Продолжить с места остановки?</p>
+        <p class="screen__actions">
+          <button type="button" class="button" data-action="draft-continue">Продолжить</button>
+          <button type="button" class="button button--secondary" data-action="draft-reset">Начать заново</button>
+        </p>
+      </section>
+
+      <!-- Экран 1. Приветствие -->
+      <section class="screen screen--center" id="screen-welcome" data-screen="welcome" hidden>
+        <h1 class="screen__title screen__title--hero">Бриф проекта</h1>
+        <p class="screen__text">Ответьте на несколько вопросов. Это поможет быстрее понять ваш бизнес и подготовить сайт именно под ваши задачи.</p>
+        <p class="screen__actions">
+          <button type="button" class="button" data-action="start">Начать</button>
+        </p>
+      </section>
+
+      <form class="form" id="briefForm" novalidate hidden>
+
+        <!-- Экран 2. О компании -->
+        <section class="screen" id="step-company" data-screen="step" hidden>
+          <h2 class="screen__title">Расскажите немного о вашей компании</h2>
+          <div class="fields">
+            <p class="field">
+              <label class="field__label" for="companyName">Название компании <span class="field__required" aria-hidden="true">*</span></label>
+              <input class="input" type="text" id="companyName" name="companyName" placeholder="Например, «Северная студия»" autocomplete="organization" required>
+              <span class="field__error" id="companyName-error" hidden></span>
+            </p>
+            <p class="field">
+              <label class="field__label" for="contactPerson">Контактное лицо <span class="field__required" aria-hidden="true">*</span></label>
+              <input class="input" type="text" id="contactPerson" name="contactPerson" placeholder="Имя и фамилия" autocomplete="name" required>
+              <span class="field__error" id="contactPerson-error" hidden></span>
+            </p>
+            <p class="field">
+              <label class="field__label" for="phone">Телефон <span class="field__required" aria-hidden="true">*</span></label>
+              <input class="input" type="tel" id="phone" name="phone" placeholder="+7 900 000-00-00" autocomplete="tel" inputmode="tel" required>
+              <span class="field__error" id="phone-error" hidden></span>
+            </p>
+            <p class="field">
+              <label class="field__label" for="email">Email <span class="field__required" aria-hidden="true">*</span></label>
+              <input class="input" type="email" id="email" name="email" placeholder="name@company.ru" autocomplete="email" inputmode="email" required>
+              <span class="field__error" id="email-error" hidden></span>
+            </p>
+            <p class="field">
+              <label class="field__label" for="website">Сайт</label>
+              <input class="input" type="url" id="website" name="website" placeholder="company.ru" autocomplete="url" inputmode="url" data-validate="url">
+              <span class="field__error" id="website-error" hidden></span>
+            </p>
+          </div>
+        </section>
+
+        <!-- Экран 3. О бизнесе -->
+        <section class="screen" id="step-business" data-screen="step" hidden>
+          <h2 class="screen__title" id="title-business">Чем занимается ваша компания?</h2>
+          <div class="fields">
+            <p class="field">
+              <textarea class="textarea" id="businessDescription" name="businessDescription" rows="4" aria-labelledby="title-business" placeholder="Расскажите простыми словами. Чем вы занимаетесь? Какие задачи решаете?"></textarea>
+            </p>
+          </div>
+        </section>
+
+        <!-- Экран 4. Основные услуги -->
+        <section class="screen" id="step-services" data-screen="step" hidden>
+          <h2 class="screen__title" id="title-services">Какие услуги являются для вас основными?</h2>
+          <div class="fields">
+            <p class="field">
+              <textarea class="textarea" id="services" name="services" rows="4" aria-labelledby="title-services" placeholder="Опишите основные услуги."></textarea>
+            </p>
+            <p class="field">
+              <label class="field__label" for="mainService">Какая услуга является самой важной?</label>
+              <input class="input" type="text" id="mainService" name="mainService" placeholder="Одна услуга, с которой стоит начать">
+            </p>
+          </div>
+        </section>
+
+        <!-- Экран 5. Клиенты -->
+        <section class="screen" id="step-clients" data-screen="step" hidden>
+          <h2 class="screen__title" id="title-clients">Кто ваши клиенты?</h2>
+          <div class="fields">
+            <p class="field">
+              <textarea class="textarea" id="idealClient" name="idealClient" rows="4" aria-labelledby="title-clients" placeholder="Опишите своего идеального клиента."></textarea>
+            </p>
+            <p class="field">
+              <label class="field__label" for="region">Регион работы</label>
+              <input class="input" type="text" id="region" name="region" placeholder="Например, Москва и область">
+            </p>
+            <p class="field">
+              <label class="field__label" for="language">Основной язык</label>
+              <input class="input" type="text" id="language" name="language" placeholder="Русский">
+            </p>
+            <fieldset class="field field--group">
+              <legend class="field__label">Работаете по всей России?</legend>
+              <span class="choices">
+                <label class="choice">
+                  <input class="choice__input" type="radio" name="nationwide" value="Да">
+                  <span class="choice__mark choice__mark--round" aria-hidden="true"></span>
+                  <span class="choice__text">Да</span>
+                </label>
+                <label class="choice">
+                  <input class="choice__input" type="radio" name="nationwide" value="Нет">
+                  <span class="choice__mark choice__mark--round" aria-hidden="true"></span>
+                  <span class="choice__text">Нет</span>
+                </label>
+              </span>
+            </fieldset>
+          </div>
+        </section>
+
+        <!-- Экран 6. Преимущества -->
+        <section class="screen" id="step-advantages" data-screen="step" hidden>
+          <h2 class="screen__title" id="title-advantages">Почему клиенты выбирают именно вас?</h2>
+          <div class="fields">
+            <p class="field">
+              <textarea class="textarea" id="advantages" name="advantages" rows="4" aria-labelledby="title-advantages" placeholder="Опишите ваши сильные стороны. Что делает вас лучше конкурентов?"></textarea>
+            </p>
+          </div>
+        </section>
+
+        <!-- Экран 7. Конкуренты -->
+        <section class="screen" id="step-competitors" data-screen="step" hidden>
+          <h2 class="screen__title">Есть ли компании, которые вам нравятся?</h2>
+          <div class="fields">
+            <p class="field">
+              <label class="field__label" for="competitor1">Ссылка</label>
+              <input class="input" type="url" id="competitor1" name="competitor1" placeholder="company.ru" inputmode="url" data-validate="url">
+              <span class="field__error" id="competitor1-error" hidden></span>
+            </p>
+            <p class="field">
+              <label class="field__label" for="competitor2">Ссылка</label>
+              <input class="input" type="url" id="competitor2" name="competitor2" placeholder="company.ru" inputmode="url" data-validate="url">
+              <span class="field__error" id="competitor2-error" hidden></span>
+            </p>
+            <p class="field">
+              <label class="field__label" for="competitor3">Ссылка</label>
+              <input class="input" type="url" id="competitor3" name="competitor3" placeholder="company.ru" inputmode="url" data-validate="url">
+              <span class="field__error" id="competitor3-error" hidden></span>
+            </p>
+            <p class="field">
+              <label class="field__label" for="competitor4">Ссылка</label>
+              <input class="input" type="url" id="competitor4" name="competitor4" placeholder="company.ru" inputmode="url" data-validate="url">
+              <span class="field__error" id="competitor4-error" hidden></span>
+            </p>
+            <p class="field">
+              <label class="field__label" for="competitor5">Ссылка</label>
+              <input class="input" type="url" id="competitor5" name="competitor5" placeholder="company.ru" inputmode="url" data-validate="url">
+              <span class="field__error" id="competitor5-error" hidden></span>
+            </p>
+            <p class="field">
+              <label class="field__label" for="competitorsLiked">Что именно вам нравится?</label>
+              <textarea class="textarea" id="competitorsLiked" name="competitorsLiked" rows="3" placeholder="Подход, сервис, оформление — что угодно."></textarea>
+            </p>
+          </div>
+        </section>
+
+        <!-- Экран 8. Примеры сайтов -->
+        <section class="screen" id="step-examples" data-screen="step" hidden>
+          <h2 class="screen__title">Какие сайты вам нравятся?</h2>
+          <div class="fields">
+            <p class="field">
+              <label class="field__label" for="example1">URL</label>
+              <input class="input" type="url" id="example1" name="example1" placeholder="example.com" inputmode="url" data-validate="url">
+              <span class="field__error" id="example1-error" hidden></span>
+            </p>
+            <p class="field">
+              <label class="field__label" for="example2">URL</label>
+              <input class="input" type="url" id="example2" name="example2" placeholder="example.com" inputmode="url" data-validate="url">
+              <span class="field__error" id="example2-error" hidden></span>
+            </p>
+            <p class="field">
+              <label class="field__label" for="example3">URL</label>
+              <input class="input" type="url" id="example3" name="example3" placeholder="example.com" inputmode="url" data-validate="url">
+              <span class="field__error" id="example3-error" hidden></span>
+            </p>
+            <p class="field">
+              <label class="field__label" for="example4">URL</label>
+              <input class="input" type="url" id="example4" name="example4" placeholder="example.com" inputmode="url" data-validate="url">
+              <span class="field__error" id="example4-error" hidden></span>
+            </p>
+            <p class="field">
+              <label class="field__label" for="example5">URL</label>
+              <input class="input" type="url" id="example5" name="example5" placeholder="example.com" inputmode="url" data-validate="url">
+              <span class="field__error" id="example5-error" hidden></span>
+            </p>
+            <p class="field">
+              <label class="field__label" for="examplesLiked">Что именно понравилось?</label>
+              <textarea class="textarea" id="examplesLiked" name="examplesLiked" rows="3" placeholder="Структура, стиль, подача информации."></textarea>
+            </p>
+          </div>
+        </section>
+
+        <!-- Экран 9. Новый сайт -->
+        <section class="screen" id="step-goals" data-screen="step" hidden>
+          <h2 class="screen__title">Каким вы видите новый сайт?</h2>
+          <div class="fields">
+            <fieldset class="field field--group">
+              <legend class="field__label">Что должен делать сайт?</legend>
+              <span class="choices choices--column">
+                <label class="choice">
+                  <input class="choice__input" type="checkbox" name="goals" value="Получать заявки">
+                  <span class="choice__mark" aria-hidden="true"></span>
+                  <span class="choice__text">Получать заявки</span>
+                </label>
+                <label class="choice">
+                  <input class="choice__input" type="checkbox" name="goals" value="Повысить доверие">
+                  <span class="choice__mark" aria-hidden="true"></span>
+                  <span class="choice__text">Повысить доверие</span>
+                </label>
+                <label class="choice">
+                  <input class="choice__input" type="checkbox" name="goals" value="Показать услуги">
+                  <span class="choice__mark" aria-hidden="true"></span>
+                  <span class="choice__text">Показать услуги</span>
+                </label>
+                <label class="choice">
+                  <input class="choice__input" type="checkbox" name="goals" value="Рассказать о компании">
+                  <span class="choice__mark" aria-hidden="true"></span>
+                  <span class="choice__text">Рассказать о компании</span>
+                </label>
+                <label class="choice">
+                  <input class="choice__input" type="checkbox" name="goals" value="Получать звонки">
+                  <span class="choice__mark" aria-hidden="true"></span>
+                  <span class="choice__text">Получать звонки</span>
+                </label>
+                <label class="choice">
+                  <input class="choice__input" type="checkbox" name="goals" value="Другое">
+                  <span class="choice__mark" aria-hidden="true"></span>
+                  <span class="choice__text">Другое</span>
+                </label>
+              </span>
+            </fieldset>
+            <p class="field">
+              <label class="field__label" for="goalsExtra">Есть ли дополнительные пожелания?</label>
+              <textarea class="textarea" id="goalsExtra" name="goalsExtra" rows="3" placeholder="Всё, что важно учесть."></textarea>
+            </p>
+          </div>
+        </section>
+
+        <!-- Экран 10. Материалы -->
+        <section class="screen" id="step-materials" data-screen="step" hidden>
+          <h2 class="screen__title">Загрузите материалы</h2>
+          <div class="fields">
+            <div class="upload" id="dropzone">
+              <svg class="upload__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <path d="M17 8l-5-5-5 5"></path>
+                <path d="M12 3v12"></path>
+              </svg>
+              <p class="upload__title">Перетащите сюда файлы</p>
+              <p class="upload__or">или</p>
+              <button type="button" class="button button--secondary" id="pickFiles">Выбрать файлы</button>
+              <input class="visually-hidden" type="file" id="fileInput" name="fileInput" multiple accept=".png,.jpg,.jpeg,.svg,.pdf,.docx,.zip,.rar" aria-label="Выбрать файлы для загрузки">
+              <p class="upload__hint">PNG, JPG, JPEG, SVG, PDF, DOCX, ZIP, RAR — до 10 МБ суммарно</p>
+            </div>
+            <span class="field__error" id="files-error" hidden></span>
+            <ul class="file-list" id="fileList"></ul>
+          </div>
+        </section>
+
+        <!-- Экран 11. Дополнительно -->
+        <section class="screen" id="step-extra" data-screen="step" hidden>
+          <h2 class="screen__title" id="title-extra">Есть ли что-то ещё, что нам важно знать?</h2>
+          <div class="fields">
+            <p class="field">
+              <textarea class="textarea textarea--large" id="additionalInfo" name="additionalInfo" rows="7" aria-labelledby="title-extra" placeholder="Сроки, пожелания, ограничения, важные детали."></textarea>
+            </p>
+          </div>
+        </section>
+
+        <!-- Экран 12. Проверка -->
+        <section class="screen" id="screen-review" data-screen="review" hidden>
+          <h2 class="screen__title">Проверьте информацию</h2>
+          <div class="review" id="reviewList"></div>
+          <p class="form__error" id="submitError" role="alert" hidden></p>
+        </section>
+
+      </form>
+
+      <!-- Экран 13. Отправка -->
+      <section class="screen screen--center" id="screen-sending" data-screen="sending" hidden>
+        <span class="loader__track"><span class="loader__bar loader__bar--indeterminate"></span></span>
+        <p class="screen__text" role="status">Отправляем данные…</p>
+      </section>
+
+      <!-- Экран 14. Спасибо -->
+      <section class="screen screen--center" id="screen-success" data-screen="success" hidden>
+        <span class="success__mark">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <path d="M4 12.5l5.5 5.5L20 6.5"></path>
+          </svg>
+        </span>
+        <h2 class="screen__title">Спасибо!</h2>
+        <p class="screen__text">Мы получили ваш бриф. Уже приступаем к подготовке проекта.</p>
+        <p class="screen__actions">
+          <button type="button" class="button" data-action="close">Закрыть</button>
+        </p>
+        <p class="screen__note" id="closeHint" hidden>Можно закрыть вкладку.</p>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="app__footer" id="appFooter" hidden>
+    <div class="container container--nav">
+      <button type="button" class="button button--secondary" id="backButton">Назад</button>
+      <button type="submit" class="button" id="nextButton" form="briefForm">Далее</button>
+    </div>
+  </footer>
+
+</div>
+
+</body>
+</html>

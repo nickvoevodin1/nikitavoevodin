@@ -12,14 +12,22 @@
  * 5. Развернуть, разрешить доступ к Google Диску и Таблицам.
  * 6. Скопируйте адрес, заканчивающийся на /exec.
  *
- * Проверка: откройте этот адрес в браузере. Должно появиться
- * {"status":"ok","message":"Бриф проекта: приём заявок работает."}
+ * Проверка: откройте этот адрес в браузере. Ответ покажет, в какую таблицу
+ * и на какой лист скрипт пишет заявки.
  * Если вместо этого — страница входа Google, значит в пункте 4
  * доступ выставлен не на «Все».
  *
  * После любой правки этого кода: Развернуть → Управление развёртываниями →
  * изменить версию на «Новая». Иначе продолжит работать старый код.
  */
+
+/**
+ * Таблица, в которую пишутся заявки.
+ * Пусто — скрипт пишет в ту таблицу, из которой он открыт (Расширения → Apps Script).
+ * Если скрипт создан отдельно, вставьте сюда ID таблицы — это часть её адреса
+ * между /d/ и /edit.
+ */
+var SPREADSHEET_ID = '';
 
 /** Лист таблицы, в который пишутся заявки. Создаётся автоматически. */
 var SHEET_NAME = 'Брифы';
@@ -74,10 +82,21 @@ var FIELDS = [
  * Открытие адреса в браузере — быстрая проверка, что развёртывание живое.
  */
 function doGet() {
-  return jsonResponse({
-    status: 'ok',
-    message: 'Бриф проекта: приём заявок работает.'
-  });
+  try {
+    var sheet = getSheet();
+    var spreadsheet = sheet.getParent();
+
+    return jsonResponse({
+      status: 'ok',
+      message: 'Бриф проекта: приём заявок работает.',
+      spreadsheet: spreadsheet.getName(),
+      sheet: sheet.getName(),
+      rows: Math.max(sheet.getLastRow() - 1, 0),
+      url: spreadsheet.getUrl()
+    });
+  } catch (error) {
+    return jsonResponse({ status: 'error', message: String(error) });
+  }
 }
 
 /**
@@ -112,7 +131,15 @@ function doPost(request) {
 
     sheet.appendRow(row);
 
-    return jsonResponse({ status: 'ok' });
+    var spreadsheet = sheet.getParent();
+
+    return jsonResponse({
+      status: 'ok',
+      spreadsheet: spreadsheet.getName(),
+      sheet: sheet.getName(),
+      row: sheet.getLastRow(),
+      url: spreadsheet.getUrl()
+    });
   } catch (error) {
     return jsonResponse({ status: 'error', message: String(error) });
   } finally {
@@ -123,8 +150,25 @@ function doPost(request) {
 /**
  * Лист заявок. При первом обращении создаёт лист и строку заголовков.
  */
+function getSpreadsheet() {
+  if (SPREADSHEET_ID) {
+    return SpreadsheetApp.openById(SPREADSHEET_ID);
+  }
+
+  var active = SpreadsheetApp.getActiveSpreadsheet();
+
+  if (!active) {
+    throw new Error(
+      'Скрипт не привязан к таблице. Укажите ID таблицы в константе SPREADSHEET_ID ' +
+      'либо создайте скрипт из самой таблицы: Расширения → Apps Script.'
+    );
+  }
+
+  return active;
+}
+
 function getSheet() {
-  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var spreadsheet = getSpreadsheet();
   var sheet = spreadsheet.getSheetByName(SHEET_NAME) || spreadsheet.insertSheet(SHEET_NAME);
 
   if (sheet.getLastRow() === 0) {
@@ -145,14 +189,15 @@ function getSheet() {
 }
 
 /**
- * Заявка уже записана? Сравниваем по идентификатору в последней колонке.
+ * Заявка уже записана? Сравниваем по идентификатору в колонке «ID заявки».
  */
 function isDuplicate(sheet, submissionId) {
   if (!submissionId || sheet.getLastRow() < 2) {
     return false;
   }
 
-  var column = sheet.getLastColumn();
+  /* Строго колонка «ID заявки»: последняя заполненная может быть чужой. */
+  var column = FIELDS.length + 3;
   var ids = sheet.getRange(2, column, sheet.getLastRow() - 1, 1).getValues();
 
   return ids.some(function (cell) {

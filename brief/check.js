@@ -94,7 +94,7 @@
           var isJson = text.indexOf('"status"') !== -1;
 
           if (isJson) {
-            finish(true, 'Да, ответ получен.', 'Ответ сервера: ' + text.slice(0, 300));
+            finish(true, 'Да, ответ получен.', describeTarget(text));
           } else {
             finish(false, 'Пришли не данные, а веб-страница.',
               'Обычно это страница входа Google. Значит, в развёртывании доступ ' +
@@ -122,6 +122,45 @@
         finish(false, 'Ответ прочитать нельзя.', 'Причина: ' + error.message + '\n' + diagnosis);
         return false;
       });
+  }
+
+  /**
+   * Куда именно скрипт пишет заявки. Главный вопрос, если «Спасибо» есть,
+   * а строк в таблице не видно: лист почти всегда создаётся отдельный.
+   */
+  function describeTarget(text) {
+    var data;
+
+    try {
+      data = JSON.parse(text);
+    } catch {
+      return 'Ответ сервера: ' + text.slice(0, 300);
+    }
+
+    if (!data.spreadsheet) {
+      return 'Ответ сервера: ' + text.slice(0, 300) + '\n\n' +
+        'Скрипт не сообщил, куда пишет. Разверните новую версию кода — ' +
+        'в свежем google-apps-script.gs это добавлено.';
+    }
+
+    var lines = [
+      'Таблица: ' + data.spreadsheet,
+      'Лист: ' + data.sheet + '  ← ищите эту вкладку внизу таблицы'
+    ];
+
+    if (typeof data.rows === 'number') {
+      lines.push('Заявок сейчас: ' + data.rows);
+    }
+
+    if (data.row) {
+      lines.push('Записано в строку: ' + data.row);
+    }
+
+    if (data.url) {
+      lines.push('Адрес таблицы: ' + data.url);
+    }
+
+    return lines.join('\n');
   }
 
   /**
@@ -153,9 +192,7 @@
       .then(function (response) {
         return response.text().then(function (text) {
           if (text.indexOf('"status":"ok"') !== -1) {
-            finish(true, 'Строка записана. Всё работает.',
-              'Ответ сервера: ' + text.slice(0, 300) +
-              '\nОткройте таблицу — там появилась строка «ТЕСТ СВЯЗИ».');
+            finish(true, 'Строка записана. Всё работает.', describeTarget(text));
           } else {
             finish(false, 'Скрипт ответил ошибкой.',
               'Ответ сервера: ' + text.slice(0, 400));

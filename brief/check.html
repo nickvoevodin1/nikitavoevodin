@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Проверка связи с Google Apps Script</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/brief/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/brief/style.css">
+<link rel="stylesheet" href="/brief/check.css">
+<script src="/brief/check.js" defer></script>
+</head>
+<body>
+
+<main class="app__main">
+  <div class="container">
+
+    <h1 class="screen__title">Проверка связи</h1>
+    <p class="screen__text">
+      Страница опрашивает ваш Apps Script разными способами и показывает,
+      на каком шаге обрывается связь. Служебная, клиентам её показывать не нужно.
+    </p>
+
+    <p class="check__url" id="endpoint"></p>
+
+    <ol class="check__list" id="results"></ol>
+
+    <p class="screen__actions">
+      <button type="button" class="button" id="runWrite">Пробная запись в таблицу</button>
+    </p>
+    <p class="screen__note">
+      Кнопка отправит в таблицу одну строку с названием «ТЕСТ СВЯЗИ» — её можно удалить.
+    </p>
+
+  </div>
+</main>
+
+</body>
+</html>

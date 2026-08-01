@@ -1,0 +1,64 @@
+/* Служебная страница проверки связи. К брифу отношения не имеет. */
+
+.check__url {
+  margin-top: var(--s-5);
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--paper-raised);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.check__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  margin-top: var(--s-5);
+  list-style: none;
+  padding: 0;
+}
+
+.check__item {
+  padding: var(--s-4);
+  border: 1px solid var(--line);
+  border-left-width: 3px;
+  border-radius: var(--r-md);
+  background: var(--paper-raised);
+}
+
+.check__item--ok {
+  border-left-color: var(--accent);
+}
+
+.check__item--fail {
+  border-left-color: var(--signal);
+}
+
+.check__item--wait {
+  border-left-color: var(--line-strong);
+}
+
+.check__name {
+  font-weight: 500;
+}
+
+.check__verdict {
+  margin-top: var(--s-2);
+  font-size: 15px;
+}
+
+.check__item--fail .check__verdict {
+  color: var(--signal);
+}
+
+.check__raw {
+  margin-top: var(--s-2);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-muted);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}

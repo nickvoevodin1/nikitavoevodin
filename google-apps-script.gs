@@ -32,6 +32,12 @@
  * Если скрипт создан отдельно, вставьте сюда ID таблицы — это часть её адреса
  * между /d/ и /edit.
  */
+/**
+ * Версия кода. Возвращается в каждом ответе, чтобы можно было убедиться,
+ * что по ссылке выполняется именно свежий код, а не старое развёртывание.
+ */
+var SCRIPT_VERSION = '3 — защита от формул';
+
 var SPREADSHEET_ID = '';
 
 /** Лист таблицы, в который пишутся заявки. Создаётся автоматически. */
@@ -94,6 +100,7 @@ function doGet() {
     return jsonResponse({
       status: 'ok',
       message: 'Бриф проекта: приём заявок работает.',
+      version: SCRIPT_VERSION,
       spreadsheet: spreadsheet.getName(),
       sheet: sheet.getName(),
       rows: Math.max(sheet.getLastRow() - 1, 0),
@@ -140,16 +147,48 @@ function doPost(request) {
 
     return jsonResponse({
       status: 'ok',
+      version: SCRIPT_VERSION,
       spreadsheet: spreadsheet.getName(),
       sheet: sheet.getName(),
       row: sheet.getLastRow(),
-      url: spreadsheet.getUrl()
+      url: spreadsheet.getUrl(),
+      storedPhone: readBack(sheet, sheet.getLastRow(), 'phone')
     });
   } catch (error) {
     return jsonResponse({ status: 'error', message: String(error) });
   } finally {
     lock.releaseLock();
   }
+}
+
+/**
+ * Что в действительности легло в ячейку.
+ *
+ * Единственный способ отличить «текст сохранён верно» от «Sheets всё-таки
+ * сделал формулу», не открывая таблицу глазами.
+ */
+function readBack(sheet, row, fieldKey) {
+  var index = -1;
+
+  FIELDS.forEach(function (field, position) {
+    if (field[0] === fieldKey) {
+      index = position;
+    }
+  });
+
+  if (index === -1) {
+    return null;
+  }
+
+  var cell = sheet.getRange(row, index + 2);
+  var formula = cell.getFormula();
+
+  return {
+    display: cell.getDisplayValue(),
+    value: String(cell.getValue()),
+    formula: formula,
+    isFormula: formula !== ''
+  };
 }
 
 /**

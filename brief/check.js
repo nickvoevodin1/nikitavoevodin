@@ -144,6 +144,11 @@
     }
 
     var lines = [
+      data.version
+        ? 'Версия скрипта: ' + data.version
+        : 'Версия скрипта: не сообщена — по ссылке выполняется старый код.\n' +
+          'Вставьте свежий google-apps-script.gs и разверните НОВУЮ ВЕРСИЮ:\n' +
+          'Развернуть → Управление развёртываниями → карандаш → Версия: «Новая версия».',
       'Таблица: ' + data.spreadsheet,
       'Лист: ' + data.sheet + '  ← ищите эту вкладку внизу таблицы'
     ];
@@ -154,6 +159,13 @@
 
     if (data.row) {
       lines.push('Записано в строку: ' + data.row);
+    }
+
+    if (data.storedPhone) {
+      lines.push('');
+      lines.push(data.storedPhone.isFormula
+        ? 'ТЕЛЕФОН ИСПОРЧЕН: Sheets записал формулу ' + data.storedPhone.formula
+        : 'Телефон сохранён как текст: ' + data.storedPhone.display);
     }
 
     if (data.url) {
@@ -178,7 +190,7 @@
       values: {
         companyName: 'ТЕСТ СВЯЗИ — строку можно удалить',
         contactPerson: 'Проверка',
-        phone: '+70000000000',
+        phone: '+7 914-339-5343',
         email: 'test@example.com'
       },
       files: []

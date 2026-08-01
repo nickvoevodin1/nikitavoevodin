@@ -19,6 +19,11 @@
  *
  * После любой правки этого кода: Развернуть → Управление развёртываниями →
  * изменить версию на «Новая». Иначе продолжит работать старый код.
+ *
+ * Строки, записанные до появления функции setTextColumns, могли попасть
+ * в таблицу как #ERROR! — телефон с «+» Sheets принимал за формулу.
+ * Чтобы починить их разом: выберите в редакторе функцию repairFormulaCells
+ * и нажмите «Выполнить». Достаточно одного раза.
  */
 
 /**
@@ -185,7 +190,60 @@ function getSheet() {
     sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold');
   }
 
+  setTextColumns(sheet);
+
   return sheet;
+}
+
+/**
+ * Все колонки кроме даты объявляем текстовыми.
+ *
+ * Иначе Sheets разбирает значение так, будто его набрали руками: ведущий «+»
+ * он со времён Lotus 1-2-3 считает синонимом «=», то есть началом формулы.
+ * Номер «+7 914-339-5343» превращается в формулу «=7 914-339-5343» и даёт
+ * #ERROR!. Тем же болеют ответы, начинающиеся с «-», «=» или «@».
+ */
+function setTextColumns(sheet) {
+  var lastColumn = FIELDS.length + 3;
+
+  sheet.getRange(2, 2, sheet.getMaxRows() - 1, lastColumn - 1).setNumberFormat('@');
+}
+
+/**
+ * Разовый ремонт строк, записанных до этой правки.
+ * Запускается вручную из редактора: выберите repairFormulaCells → Выполнить.
+ *
+ * Ячейка с ошибкой хранит формулу «=7 914-339-5343» — исходный текст
+ * восстанавливается заменой ведущего «=» обратно на «+».
+ */
+function repairFormulaCells() {
+  var sheet = getSheet();
+
+  if (sheet.getLastRow() < 2) {
+    return;
+  }
+
+  var range = sheet.getRange(2, 2, sheet.getLastRow() - 1, FIELDS.length + 2);
+  var formulas = range.getFormulas();
+  var values = range.getValues();
+  var repaired = 0;
+
+  for (var row = 0; row < formulas.length; row += 1) {
+    for (var column = 0; column < formulas[row].length; column += 1) {
+      var formula = formulas[row][column];
+
+      if (formula && formula.charAt(0) === '=') {
+        values[row][column] = '+' + formula.slice(1);
+        repaired += 1;
+      }
+    }
+  }
+
+  if (repaired) {
+    range.setValues(values);
+  }
+
+  SpreadsheetApp.getActiveSpreadsheet().toast('Восстановлено ячеек: ' + repaired);
 }
 
 /**

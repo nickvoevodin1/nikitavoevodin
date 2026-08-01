@@ -14,7 +14,7 @@
    * Адрес веб-приложения Google Apps Script.
    * Инструкция по получению ссылки — в README.md.
    */
-  var GOOGLE_SCRIPT_URL = '';
+  var GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxFjvkC76Ab_J1M2etqHND61xcvCy7RPfyrFvXGmOLAil7BjFwlf7ZZYhDySv-eEQLV/exec';
 
   var STORAGE_KEY = 'nv-brief-draft';
   var LOADER_DURATION = 800;
